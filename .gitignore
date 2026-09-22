@@ -1,0 +1,171 @@
+# ============================================
+# .NET / C# / ASP.NET Core
+# ============================================
+
+# Артефакты сборки
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Ll]og/
+[Ll]ogs/
+
+# Артефакты публикации
+publish/
+*.publishproj
+*.pubxml
+*.pubxml.user
+
+# Пользовательские файлы Visual Studio / Rider / VS Code
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+# ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# NuGet
+*.nupkg
+*.snupkg
+*.nuget.props
+*.nuget.targets
+packages/
+!packages/build/
+!packages/repositories.config
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# MSBuild / Roslyn
+*.binlog
+*.tlog
+*.cache
+*.dll.config
+*.exe.config
+
+# Пакеты NuGet, восстановленные локально
+.nuget/
+
+# ============================================
+# .NET Core / .NET 8 специфичное
+# ============================================
+
+# Кэш инструментов .NET
+.dotnet/
+tools/
+
+# Файлы покрытия тестов
+*.coverage
+*.coveragexml
+coverage/
+TestResults/
+[Cc]overage*/
+
+# ============================================
+# SQLite (для учебной версии)
+# ============================================
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.sqlite-shm
+*.sqlite-wal
+*.db-journal
+*.sqlite-journal
+
+# ============================================
+# Конфигурация со секретами
+# ============================================
+# appsettings.Development.json и appsettings.Production.json
+# часто содержат строки подключения — коммитить не рекомендуется
+appsettings.Development.json
+appsettings.Production.json
+appsettings.Local.json
+*.secrets.json
+secrets.json
+.env
+.env.*
+!.env.example
+
+# ============================================
+# Логи и временные файлы приложения
+# ============================================
+*.log
+logs/
+temp/
+tmp/
+*.tmp
+*.temp
+
+# Кэш парсера расписания МИЭТ (сырые HTML/JSON-дампы)
+cache/
+parser-cache/
+schedule-cache/
+*.dump
+
+# ============================================
+# Node.js (если используется для фронтенда / сборки JS/CSS)
+# ============================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+.eslintcache
+.stylelintcache
+
+# Собранные бандлы (если у вас есть билд-шаг для JS/CSS)
+# Раскомментируйте, если бандлы генерируются автоматически:
+# wwwroot/dist/
+# wwwroot/bundles/
+# wwwroot/css/site.min.css
+# wwwroot/js/site.min.js
+
+# ============================================
+# Фронтенд (JS/TS)
+# ============================================
+*.tsbuildinfo
+dist/
+build/
+
+# ============================================
+# ОС
+# ============================================
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ============================================
+# Docker (если будете контейнеризировать)
+# ============================================
+# .dockerignore создается отдельно
+docker-compose.override.yml
