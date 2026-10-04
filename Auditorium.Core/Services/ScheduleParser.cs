@@ -77,8 +77,7 @@ public sealed class ScheduleParser : IDisposable
 
         _httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
             "Accept",
-            "*/
-*");
+            "*/*");
 
         _httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
             "Accept-Language",
@@ -151,13 +150,31 @@ public sealed class ScheduleParser : IDisposable
     public async Task<List<Lesson>> ParseAllScheduleAsync(
         CancellationToken cancellationToken = default)
     {
-        var groups = await GetGroupCodesAsync(cancellationToken);
+        var allGroups = await GetGroupCodesAsync(cancellationToken);
 
-        if (groups.Count == 0)
+        if (allGroups.Count == 0)
         {
             throw new InvalidOperationException(
                 "Список групп пуст.");
         }
+
+        var groups = allGroups
+            .Where(g => !IsCollegeGroup(g))
+            .ToList();
+
+        var skipped = allGroups.Count - groups.Count;
+
+        Console.WriteLine(
+            $"[МИЭТ] Пропущено групп колледжа: {skipped}");
+        Console.WriteLine(
+            $"[МИЭТ] Групп для обработки: {groups.Count}");
+
+        if (groups.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "После фильтрации не осталось групп для обработки.");
+        }
+
 
         Console.WriteLine();
         Console.WriteLine(
@@ -839,6 +856,22 @@ public sealed class ScheduleParser : IDisposable
         }
     }
 
+    private static bool IsCollegeGroup(string group)
+    {
+        if (string.IsNullOrWhiteSpace(group))
+            return false;
+
+        // Явное указание "Колледж"
+        if (group.Contains("Колледж", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        // Шаблон: две-три буквы, дефис, две цифры, дефис, две цифры, буква О или С
+        // Например: ИС-24-31О, РУП-26-11О, ТЭ-24-31О
+        if (Regex.IsMatch(group, @"^[А-Яа-я]{2,3}-\d{2}-\d{2}[ОС]$"))
+            return true;
+
+        return false;
+    }
     private void WriteLog(string message)
     {
         var line =
