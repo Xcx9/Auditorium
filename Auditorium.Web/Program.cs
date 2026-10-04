@@ -1,14 +1,20 @@
 using Auditorium.Core.Services;
+using Auditorium.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Добавление сервисов в контейнер
 builder.Services.AddControllersWithViews();
+
+//Подключение к БД
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Настройка pipline HTTP-запросов.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
