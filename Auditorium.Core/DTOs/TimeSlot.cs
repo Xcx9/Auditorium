@@ -1,12 +1,14 @@
 using System;
 
-namespace Auditorium.Core.DTOs
+namespace Auditorium.Core.DTOs;
+
+public class TimeSlot
 {
-    public class TimeSlot
-    {
-        public string? Time { get; set; }        // "1 пара"
-        public int Code { get; set; }            // 1, 2, 3...
-        public DateTime? TimeFrom { get; set; }
-        public DateTime? TimeTo { get; set; }
-    }
+    public string? Time { get; set; }
+
+    public int Code { get; set; }
+
+    public DateTime? TimeFrom { get; set; }
+
+    public DateTime? TimeTo { get; set; }
 }

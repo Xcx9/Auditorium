@@ -3,23 +3,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Auditorium.Infrastructure.Data
 {
-    /// <summary>
-    /// Контекст базы данных для работы с расписанием.
-    /// </summary>
     public class AppDbContext : DbContext
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
-        {
-        }
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-        // Таблица занятий.
         public DbSet<Lesson> Lessons { get; set; }
+        public DbSet<Audience> Audiences { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Настройка сущности Lesson.
             modelBuilder.Entity<Lesson>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -27,6 +21,19 @@ namespace Auditorium.Infrastructure.Data
                 entity.Property(e => e.TeacherFull).HasMaxLength(200);
                 entity.Property(e => e.RoomName).HasMaxLength(100);
                 entity.Property(e => e.GroupName).HasMaxLength(50);
+                entity.Property(e => e.Semester).HasMaxLength(100);
+
+                // Связь: много занятий — одна аудитория.
+                entity.HasOne<Audience>()
+                      .WithMany(a => a.Lessons)
+                      .HasForeignKey(l => l.AudienceId)
+                      .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            modelBuilder.Entity<Audience>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).HasMaxLength(100);
             });
         }
     }

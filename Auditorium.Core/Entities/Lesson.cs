@@ -16,6 +16,7 @@ namespace Auditorium.Core.Entities
         public string? GroupName { get; set; }
         public int? RoomCode { get; set; }
         public string? RoomName { get; set; }
-        public int? AudienceId { get; set; }   // ID аудитории, по которой искали
+        public int? AudienceId { get; set; }
+        public string? Semester { get; set; }
     }
 }
