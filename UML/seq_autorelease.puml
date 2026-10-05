@@ -1,0 +1,27 @@
+@startuml SmartCampus_Sequence_AutoRelease
+participant "Таймер / запрос статуса" as T
+participant "RoomStatusService" as S
+participant "БД" as DB
+
+T -> S : AutoReleaseMarksAtClassStart(now)
+S -> DB : Получить все активные отметки
+DB --> S : Список OccupancyMark
+
+loop Для каждой активной отметки
+  S -> DB : Найти ближайшее занятие после CreatedAt
+  DB --> S : nextClass
+  alt nextClass != null и nextClass.Start <= now
+    S -> DB : UPDATE IsCancelled = true
+    DB --> S : OK
+  else
+    S -> S : Отметка остаётся активной
+  end
+end
+
+note over S
+  Если следующей пары нет —
+  отметка не снимается
+  автоматически. Ждёт ручного
+  снятия пользователем.
+end note
+@enduml
