@@ -11,7 +11,9 @@ class User {
 class Room {
   - int Id
   - string Number
+// Различие между IsEnabled и State?
   - bool IsEnabled
+  + RoomState State
   + string FullName()
   + int BuildingNumber()
   + int FloorNumber()
@@ -46,11 +48,7 @@ class RoomStatusService {
   + void AutoReleaseMarksAtClassStart(DateTime now)
 }
 
-class RoomStatus {
-  + Room Room
-  + RoomState State
-}
-
+// Нужно ли что-то по типу "на ремонте"?
 enum RoomState {
   Free
   Busy
