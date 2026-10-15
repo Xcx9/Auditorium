@@ -1,0 +1,25 @@
+@startuml SmartCampus_Sequence_CancelMark
+actor U1 as "Пользователь 1 (автор)"
+actor U2 as "Пользователь 2"
+participant "Веб-интерфейс" as UI
+participant "RoomStatusService" as S
+participant "БД" as DB
+
+U2 -> UI : Снять отметку ауд. 3120
+UI -> S : CancelMark(mark, U2)
+S -> S : mark.UserId != U2.Id ?
+S --> UI : MarkResult.NotOwner
+UI --> U2 : «Снять может только автор отметки»
+
+U1 -> UI : Снять свою отметку
+UI -> S : CancelMark(mark, U1)
+S -> DB : UPDATE IsCancelled = true
+DB --> S : OK
+S --> UI : MarkResult.Success
+UI -> U1 : «Отметка снята»
+
+note over S
+  Чужие отметки изменять
+  нельзя. Только свою.
+end note
+@enduml
