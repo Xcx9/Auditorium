@@ -13,6 +13,6 @@ namespace Auditorium.Core.Entities
         public bool IsActive(int userId) 
         { return false; }
         public void Cancel(int userId) 
-        { }
+        { return null; }
     }
 }
