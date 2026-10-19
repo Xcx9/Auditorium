@@ -1,0 +1,30 @@
+@startuml SmartCampus_Sequence_CreateMark
+actor Пользователь as U
+participant "Веб-интерфейс" as UI
+participant "RoomStatusService" as S
+participant "БД (SQLite)" as DB
+
+U -> UI : Нажимает «Отметить занятой»
+UI -> S : CreateMark(room, user)
+
+S -> DB : Проверить активную отметку пользователя
+DB --> S : У пользователя нет активной отметки
+
+S -> DB : Проверить активную отметку аудитории
+DB --> S : У аудитории нет активной отметки
+
+S -> DB : Проверить ScheduleEntry на текущий момент
+DB --> S : Свободно по расписанию
+
+S -> DB : INSERT OccupancyMark (RoomId, UserId, CreatedAt)
+DB --> S : OK
+
+S --> UI : MarkResult.Success
+UI --> U : «Аудитория отмечена как занятая»
+
+note over S
+  Отметка не имеет времени
+  окончания. Снимется вручную
+  или при начале следующей пары.
+end note
+@enduml
