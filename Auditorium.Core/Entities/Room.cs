@@ -9,7 +9,6 @@ namespace Auditorium.Core.Entities
     {
         private int Id;
         private string Number;
-        //private bool IsEnabled; Она вообще нужна?
         public RoomState State;
         public int BuildingNumber(int buildingNumber)
         { return buildingNumber; }
