@@ -1,36 +1,36 @@
 
-using System;
+namespace Auditorium.Core.Entities;
 
-namespace Auditorium.Core.Entities
+public class ScheduleEntry
 {
-    public class ScheduleEntry
+    private int _id;
+    private int _roomId;
+    private DateTime _start;
+    private DateTime _end;
+
+    private ScheduleEntry() { } // Для EF Core
+
+    public ScheduleEntry(int roomId, DateTime start, DateTime end)
     {
-        // Уникальный идентификатор занятия
-        public int Id { get; set; }
+        if (end <= start)
+            throw new ArgumentException(
+                "Время окончания должно быть позже начала.");
 
-        // Идентификатор аудитории
-        public int RoomId { get; set; }
-
-        // Время начала занятия
-        public DateTime Start { get; set; }
-
-        // Время окончания занятия
-        public DateTime End { get; set; }
-
-        // Связь занятия с аудиторией
-        public Room Room { get; set; } = null!;
-
-        // Проверяет, идет ли занятие в указанный момент
-        public bool IsActiveAt(DateTime moment)
-        {
-            return moment >= Start && moment < End;
-        }
-
-        // Возвращает время начала занятия,
-        // если оно еще не наступило
-        public DateTime? NextStartAfter(DateTime moment)
-        {
-            return Start > moment ? Start : null;
-        }
+        _roomId = roomId;
+        _start = start;
+        _end = end;
     }
+
+    public int Id => _id;
+    public int RoomId => _roomId;
+    public DateTime Start => _start;
+    public DateTime End => _end;
+
+    public Room Room { get; private set; } = null!;
+
+    public bool IsActiveAt(DateTime moment)
+        => moment >= Start && moment < End;
+
+    public DateTime? NextStartAfter(DateTime moment)
+        => Start > moment ? Start : null;
 }

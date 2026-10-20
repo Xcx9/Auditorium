@@ -1,56 +1,70 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
+
 using Auditorium.Core.Entities;
+using Auditorium.Core.Interfaces;
 
-namespace Auditorium.Core.Services
+namespace Auditorium.Core.Services;
+
+public enum RoomState
 {
-    enum RoomState
+    Free,
+    Busy
+}
+
+public enum MarkResult
+{
+    Success,
+    AlreadyBusyByUser,
+    AlreadyBusyByRoom,
+    NotOwner,
+    ClassInProgress,
+    NotFound
+}
+
+public sealed class RoomStatusInfo
+{
+    public Room Room { get; }
+    public RoomState State { get; }
+
+    public RoomStatusInfo(Room room, RoomState state)
     {
-        Free,
-        Busy
-    }
-
-    public enum MarkResult
-    {
-        Success,
-        AlreadyBusyByUser,
-        AlreadyBusyByRoom,
-        NotOwner,
-        ClassInProgress,
-        NotFound
-    }
-
-    internal class RoomStatusService
-    {
-        private readonly List<RoomStatus> _roomStates = new();
-        public RoomState GetStatus(Room room, DateTime time)
-        { return room.State; }
-        public void SetStatus(Room room, RoomState state)
-        { room.State = state; }
-        public List<RoomStatus> GetFreeRooms(DateTime now)
-        {
-            var result = new List<Room>();
-
-            foreach (var room in _rooms.GetAll())
-            {
-                if (!room.IsEnabled) continue;   // закрытые аудитории не показываем
-
-                var state = GetStatus(room, now);
-                if (state == RoomState.Free)
-                    result.Add(new RoomStatus(room, state));
-            }
-
-            return result;
-        }
-        public MarkResult CreateMark(Room room, User user)
-        {  }
-        public MarkResult CancelMark(OccupancyMark mark, User user)
-        {  }
-        public OccupancyMark? GetActiveMarkOf(User user)
-        { return null; }
-        public void AutoReleaseMarksAtClassStart(DateTime now)
-        { }
+        Room = room;
+        State = state;
     }
 }
 
+public class RoomStatusService
+{
+    private readonly IRoomRepository _rooms;
+
+    public RoomStatusService(IRoomRepository rooms)
+    {
+        _rooms = rooms;
+    }
+
+    public RoomState GetStatus(Room room, DateTime now)
+    {
+        // Пока возвращаем сохранённое состояние.
+        // Позже здесь нужно учитывать расписание
+        // и активные отметки.
+        return room.State;
+    }
+
+    public async Task<List<RoomStatusInfo>> GetFreeRoomsAsync(
+        DateTime now)
+    {
+        var rooms = await _rooms.GetAllAsync();
+        var result = new List<RoomStatusInfo>();
+
+        foreach (var room in rooms)
+        {
+            var state = GetStatus(room, now);
+
+            if (state == RoomState.Free)
+            {
+                result.Add(new RoomStatusInfo(room, state));
+            }
+        }
+
+        return result;
+    }
+}

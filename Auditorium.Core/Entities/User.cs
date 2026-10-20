@@ -1,17 +1,30 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace Auditorium.Core.Entities
+namespace Auditorium.Core.Entities;
+
+public class User
 {
-    internal class User
+    private int _id;
+    private string _login = string.Empty;
+    private string _passwordHash = string.Empty;
+
+    private User() { } // Для EF Core
+
+    public User(string login, string passwordHash)
     {
-        private int Id;
-        private string Login;
-        private string PasswordHash;
-        public string GetDisplayName(string username)
-        {
-            return username;
-        }
+        if (string.IsNullOrWhiteSpace(login))
+            throw new ArgumentException("Логин обязателен.", nameof(login));
+
+        if (string.IsNullOrWhiteSpace(passwordHash))
+            throw new ArgumentException(
+                "Хеш пароля обязателен.", nameof(passwordHash));
+
+        _login = login;
+        _passwordHash = passwordHash;
     }
+
+    public int Id => _id;
+    public string Login => _login;
+    public string PasswordHash => _passwordHash;
+
+    public string GetDisplayName() => Login;
 }
