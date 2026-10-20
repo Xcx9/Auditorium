@@ -18,7 +18,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-using (var scope = app.Services.CreateScope())
+/*using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider
         .GetRequiredService<AppDbContext>();
@@ -111,7 +111,7 @@ using (var scope = app.Services.CreateScope())
     Console.WriteLine("============================================");
     Console.WriteLine();
 }
-
+*/
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseAuthorization();
