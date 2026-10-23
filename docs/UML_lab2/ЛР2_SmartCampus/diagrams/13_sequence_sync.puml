@@ -1,0 +1,47 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 15
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam ArrowColor #34495E
+skinparam classAttributeIconSize 0
+skinparam usecaseBackgroundColor #F3F7FB
+skinparam classBackgroundColor #F3F7FB
+skinparam activityBackgroundColor #F3F7FB
+skinparam conditionStyle diamond
+skinparam sequenceMessageAlign center
+hide footbox
+title SmartCampus — загрузка и резервная копия
+participant Планировщик as T
+control ScheduleUpdater as Up
+control ScheduleParser as P
+participant "Сайт МИЭТ" as Site
+database Хранилище as DB
+T -> Up : Refresh() при запуске / интервал <= 60 минут
+Up -> P : LoadAndValidate()
+P -> Site : получить официальное расписание
+alt ошибка сети
+ Site --> P : ошибка / тайм-аут
+ P --> Up : загрузка не выполнена
+ Up -> DB : UpdateFailed = true; прежнюю копию сохранить
+else ответ получен
+ Site --> P : данные расписания
+ P -> P : разобрать и проверить полноту;\nсформировать аудитории, занятия и покрытие дат
+ alt ошибка или неполный разбор
+  P --> Up : кандидат отклонен
+  Up -> DB : UpdateFailed = true; прежнюю копию сохранить
+ else кандидат корректен
+  P --> Up : проверенный кандидат
+  Up -> DB : атомарно заменить копию;\nLastSuccessfulUpdate = now, UpdateFailed = false
+  DB --> Up : сохранено
+  Up -> Up : вызвать пересчет автоснятия и статусов
+ end
+end
+Up --> T : результат обновления
+note over Up, DB
+Ошибка загрузки не очищает существующие аудитории и отметки.
+При первом сбое без копии поиск сообщает об отсутствии данных.
+Старая копия используется только для дат, которые она покрывает.
+end note
+@enduml

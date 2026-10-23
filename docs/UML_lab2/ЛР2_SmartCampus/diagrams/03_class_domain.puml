@@ -1,0 +1,67 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 15
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam ArrowColor #34495E
+skinparam classAttributeIconSize 0
+skinparam usecaseBackgroundColor #F3F7FB
+skinparam classBackgroundColor #F3F7FB
+skinparam activityBackgroundColor #F3F7FB
+skinparam conditionStyle diamond
+skinparam sequenceMessageAlign center
+hide footbox
+title SmartCampus — классы предметной области
+class User {
+ + Id : int
+ + Login : string
+ + PasswordHash : string
+}
+class Room {
+ + Id : int
+ + Number : string
+ + Building : string
+ + /Status : string
+ + ScheduleDates : List<DateOnly>
+}
+class OccupancyMark {
+ + Id : int
+ + UserId : int
+ + RoomId : int
+ + CreatedAt : DateTimeOffset
+ + AutoReleaseAt : DateTimeOffset?
+ + ClosedAt : DateTimeOffset?
+}
+class Lesson {
+ + Id : int
+ + RoomId : int
+ + StartsAt : DateTimeOffset
+ + EndsAt : DateTimeOffset
+}
+class ScheduleSnapshot {
+ + LastSuccessfulUpdate : DateTimeOffset?
+ + UpdateFailed : bool
+ + Lessons : List<Lesson>
+ + Rooms : List<Room>
+}
+User "1" -- "0..*" OccupancyMark : создал >
+Room "1" -- "0..*" OccupancyMark : относится к <
+Room "1" -- "0..*" Lesson : проходит в <
+ScheduleSnapshot "1" --> "0..*" Lesson : содержит сведения
+ScheduleSnapshot "1" --> "0..*" Room : каталог и покрытие дат
+note bottom of Room
+ /Status — вычисляемое поле самого Room:
+ «занято», если идет занятие или есть активная отметка;
+ иначе «свободно». Отдельного класса статуса нет.
+ Без данных на дату статус не публикуется, создание запрещено.
+ ScheduleDates отличает «нет занятий» от «нет данных».
+end note
+note bottom of OccupancyMark
+ Активна, когда ClosedAt == null.
+ Не более одной активной отметки на User и на Room.
+ AutoReleaseAt — начало следующего занятия или null.
+ Это время вычисляет система, пользователь его не выбирает.
+ 0..* обозначает всю историю, включая закрытые отметки.
+end note
+@enduml

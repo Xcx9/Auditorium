@@ -1,0 +1,58 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 15
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam ArrowColor #34495E
+skinparam classAttributeIconSize 0
+skinparam usecaseBackgroundColor #F3F7FB
+skinparam classBackgroundColor #F3F7FB
+skinparam activityBackgroundColor #F3F7FB
+skinparam conditionStyle diamond
+skinparam sequenceMessageAlign center
+hide footbox
+title SmartCampus — возможности пользователя
+left to right direction
+actor "Пользователь" as U
+rectangle "SmartCampus — веб-интерфейс" {
+  usecase "UC01 Зарегистрироваться" as Reg
+  usecase "UC02 Войти" as Login
+  usecase "UC03 Найти свободные\nаудитории сейчас" as Search
+  usecase "UC04 Задать фильтры\nкорпус и часть номера" as Filter
+  usecase "UC05 Открыть карточку\nномер, корпус, текущий статус" as Card
+  usecase "UC06 Отметить аудиторию\nзанятой сейчас" as Create
+  usecase "UC07 Посмотреть\nсвою активную отметку" as Own
+  usecase "UC08 Снять\nсвою отметку" as Cancel
+  usecase "UC09 Определить текущее\nвремя и статус" as Status
+  usecase "UC10 Повторно проверить\nограничения и сохранить атомарно" as Check
+  usecase "UC11 Показать предупреждение\nи время обновления копии" as Warn
+  usecase "UC12 Сообщить об отсутствии\nданных на текущую дату" as NoData
+}
+U -- Reg
+U -- Login
+U -- Search
+U -- Filter
+U -- Card
+U -- Create
+U -- Own
+U -- Cancel
+Search ..> Status : <<include>>
+Card ..> Status : <<include>>
+Create ..> Check : <<include>>
+Check ..> Status : <<include>>
+Filter ..> Search : <<extend>>\n[заданы фильтры]
+Warn ..> Search : <<extend>>\n[обновление не удалось]
+Warn ..> Card : <<extend>>\n[обновление не удалось]
+NoData ..> Search : <<extend>>\n[есть аудитории без данных]
+NoData ..> Card : <<extend>>\n[нет данных для аудитории]
+note bottom of Cancel
+  Требуется вход и проверка автора отметки.
+  Доступность расписания не является условием снятия.
+end note
+note bottom of Check
+  Аудитория свободна; у пользователя нет активной отметки;
+  данные расписания покрывают текущую дату.
+  Проверка и сохранение — единая операция.
+end note
+@enduml

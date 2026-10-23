@@ -1,0 +1,50 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 15
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam ArrowColor #34495E
+skinparam classAttributeIconSize 0
+skinparam usecaseBackgroundColor #F3F7FB
+skinparam classBackgroundColor #F3F7FB
+skinparam activityBackgroundColor #F3F7FB
+skinparam conditionStyle diamond
+skinparam sequenceMessageAlign center
+hide footbox
+title SmartCampus — создание отметки
+start
+:Получить запрос авторизованного пользователя;\nпроверить формат идентификатора аудитории;
+if (Запрос корректен?) then (нет)
+ :Вернуть ошибку;
+ stop
+else (да)
+endif
+partition "Единая атомарная операция" {
+ :Начать транзакцию;\nполучить серверное время по Москве;
+ :Снять отметки с наступившим AutoReleaseAt;
+ if (Есть аудитория и данные на сегодня?) then (нет)
+  :Завершить транзакцию без создания;\nотказ — нет актуальных данных;
+  stop
+ else (да)
+ endif
+ if (У пользователя есть активная отметка?) then (да)
+  :Завершить транзакцию без создания;\nотказ — сначала снимите свою отметку;
+  stop
+ else (нет)
+ endif
+ if (Идет занятие или есть отметка аудитории?) then (да)
+  :Завершить транзакцию без создания;\nотказ — аудитория уже занята;
+  stop
+ else (нет)
+ endif
+ :Вычислить начало следующего занятия;\nесли его нет, AutoReleaseAt = null;
+ :Создать отметку с текущим временем;\nуникальные ограничения UserId и RoomId;
+ if (Конфликт конкурентного сохранения?) then (да)
+  :Откатить транзакцию;\nвернуть сообщение о конфликте;
+ else (нет)
+  :Зафиксировать транзакцию;\nRoom.Status = «занято»; вернуть успех;
+ endif
+}
+stop
+@enduml

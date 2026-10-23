@@ -1,0 +1,52 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 15
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam ArrowColor #34495E
+skinparam classAttributeIconSize 0
+skinparam usecaseBackgroundColor #F3F7FB
+skinparam classBackgroundColor #F3F7FB
+skinparam activityBackgroundColor #F3F7FB
+skinparam conditionStyle diamond
+skinparam sequenceMessageAlign center
+hide footbox
+title SmartCampus — создание и конфликт запросов
+actor Пользователь as U
+boundary Интерфейс as UI
+control CampusService as S
+database Хранилище as DB
+U -> UI : «Отметить занятой»
+UI -> S : CreateMark(userId из сессии, roomId)
+S -> S : проверить вход и формат запроса
+alt вход или формат неверны
+ S --> UI : отказ
+else запрос корректен
+ critical атомарная проверка и запись
+  S -> DB : начать транзакцию; получить текущие данные
+  DB --> S : Room, занятия, активные отметки
+  S -> S : взять серверное now; обработать автоснятие;\nпроверить данные на дату и оба ограничения
+  alt нет данных / у пользователя есть отметка / аудитория занята
+   S -> DB : завершить без создания
+   S --> UI : причина отказа
+  else создание допустимо
+   S -> DB : записать отметку и вычисленное AutoReleaseAt;\nпроверить уникальность активных UserId и RoomId
+   alt конкурентный запрос уже занял аудиторию или пользователя
+    DB --> S : конфликт уникальности
+    S -> DB : откатить создание
+    S --> UI : конфликт, обновите список
+   else запись выполнена
+    DB --> S : сохранено
+    S -> DB : зафиксировать транзакцию
+    S --> UI : отметка создана, Room.Status = «занято»
+   end
+  end
+ end
+end
+UI --> U : результат операции
+note over S, DB
+Предварительный показ «свободно» не заменяет повторную проверку.
+При двух одновременных запросах сохраняется только одна отметка.
+end note
+@enduml
