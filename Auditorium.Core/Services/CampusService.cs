@@ -1,4 +1,3 @@
-
 using Auditorium.Core.Entities;
 using Auditorium.Core.Interfaces;
 
@@ -38,8 +37,9 @@ public class CampusService
         // и активные отметки.
         return room.Status;
     }
+    
 
-    public async Task<List<RoomStatusInfo>> GetFreeRoomsAsync(
+    public async Task<List<RoomStatusInfo>> FindFree(int building,
         DateTime now)
     {
         var rooms = await _rooms.GetAllAsync();
@@ -49,12 +49,50 @@ public class CampusService
         {
             var state = GetStatus(room, now);
 
-            if (state == RoomState.Free)
+            if (state == RoomState.Free && room.BuildingNumber() == building)
             {
                 result.Add(new RoomStatusInfo(room, state));
             }
         }
 
         return result;
+    }
+
+    public async Task<List<RoomStatusInfo>> GetRoom(string roomId, DateTime now)
+    {
+        var rooms = await _rooms.GetAllAsync();
+        var result = new List<RoomStatusInfo>();
+
+        foreach (var room in rooms)
+        {
+            var state = GetStatus(room, now);
+
+            if (state == RoomState.Free && roomId == room.Number)
+            {
+                result.Add(new RoomStatusInfo(room, state));
+                break;
+            }
+        }
+        return result;
+    }
+
+    public void GetOwnMark(int userId)
+    {
+        
+    }
+    
+    public void CreateMark(int userId)
+    {
+        
+    }
+    
+    public void CancelMark(int userId)
+    {
+        
+    }
+
+    public void ReleaseDueMarks(DateTime now)
+    {
+        
     }
 }
