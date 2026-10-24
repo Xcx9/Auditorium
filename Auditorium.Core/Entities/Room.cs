@@ -3,38 +3,26 @@ using Auditorium.Core.Services;
 
 namespace Auditorium.Core.Entities;
 
-public class Room
+public class Room 
 {
     private int _id;
     private string _number = string.Empty;
-    private bool _isEnabled = true;
-    private RoomState _state = RoomState.Free;
+    private RoomState _status;
 
-    private Room() { } // Для EF Core
+    private Room() { } // EF Core
 
     public Room(string number)
     {
         if (!IsValidNumber(number))
-            throw new ArgumentException("Некорректный номер аудитории.", nameof(number));
+            throw new ArgumentException("Wrong type room id.", nameof(number));
 
         _number = number;
     }
 
     public int Id => _id;
     public string Number => _number;
-    public bool IsEnabled => _isEnabled;
-    public RoomState State => _state;
-
-    public void SetEnabled(bool enabled)
-    {
-        _isEnabled = enabled;
-    }
-
-    public void SetState(RoomState state)
-    {
-        _state = state;
-    }
-
+    public RoomState Status => _status;
+    
     public static bool IsValidNumber(string number)
     {
         return !string.IsNullOrWhiteSpace(number);

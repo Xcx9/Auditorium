@@ -10,16 +10,6 @@ public enum RoomState
     Busy
 }
 
-public enum MarkResult
-{
-    Success,
-    AlreadyBusyByUser,
-    AlreadyBusyByRoom,
-    NotOwner,
-    ClassInProgress,
-    NotFound
-}
-
 public sealed class RoomStatusInfo
 {
     public Room Room { get; }
@@ -32,11 +22,11 @@ public sealed class RoomStatusInfo
     }
 }
 
-public class RoomStatusService
+public class CampusService
 {
     private readonly IRoomRepository _rooms;
 
-    public RoomStatusService(IRoomRepository rooms)
+    public CampusService(IRoomRepository rooms)
     {
         _rooms = rooms;
     }
@@ -46,7 +36,7 @@ public class RoomStatusService
         // Пока возвращаем сохранённое состояние.
         // Позже здесь нужно учитывать расписание
         // и активные отметки.
-        return room.State;
+        return room.Status;
     }
 
     public async Task<List<RoomStatusInfo>> GetFreeRoomsAsync(

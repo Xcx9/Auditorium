@@ -1,20 +1,20 @@
 
 namespace Auditorium.Core.Entities;
 
-public class ScheduleEntry
+public class Lesson
 {
     private int _id;
     private int _roomId;
     private DateTime _start;
     private DateTime _end;
 
-    private ScheduleEntry() { } // Для EF Core
+    private Lesson() { } // EF Core
 
-    public ScheduleEntry(int roomId, DateTime start, DateTime end)
+    public Lesson(int roomId, DateTime start, DateTime end)
     {
         if (end <= start)
             throw new ArgumentException(
-                "Время окончания должно быть позже начала.");
+                "End time should be greater than start time.");
 
         _roomId = roomId;
         _start = start;

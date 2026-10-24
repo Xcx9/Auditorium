@@ -12,7 +12,7 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<Room> Rooms => Set<Room>();
-    public DbSet<ScheduleEntry> ScheduleEntries => Set<ScheduleEntry>();
+    public DbSet<Lesson> ScheduleEntries => Set<Lesson>();
     public DbSet<OccupancyMark> OccupancyMarks => Set<OccupancyMark>();
     public DbSet<User> Users => Set<User>();
 
@@ -34,18 +34,14 @@ public class AppDbContext : DbContext
                 .IsRequired()
                 .UsePropertyAccessMode(PropertyAccessMode.Field);
 
-            entity.Property(r => r.IsEnabled)
-                .HasField("_isEnabled")
-                .UsePropertyAccessMode(PropertyAccessMode.Field);
-
-            entity.Property(r => r.State)
-                .HasField("_state")
+            entity.Property(r => r.Status)
+                .HasField("_status")
                 .UsePropertyAccessMode(PropertyAccessMode.Field);
 
             entity.HasIndex(r => r.Number).IsUnique();
         });
 
-        modelBuilder.Entity<ScheduleEntry>(entity =>
+        modelBuilder.Entity<Lesson>(entity =>
         {
             entity.HasKey(s => s.Id);
 
@@ -75,34 +71,17 @@ public class AppDbContext : DbContext
         {
             entity.HasKey(m => m.Id);
 
-            entity.Property(m => m.Id)
-                .HasField("_id")
-                .UsePropertyAccessMode(PropertyAccessMode.Field);
-
-            entity.Property(m => m.RoomId)
-                .HasField("_roomId")
-                .UsePropertyAccessMode(PropertyAccessMode.Field);
-
-            entity.Property(m => m.UserId)
-                .HasField("_userId")
-                .UsePropertyAccessMode(PropertyAccessMode.Field);
-
-            entity.Property(m => m.CreatedAt)
-                .HasField("_createdAt")
-                .UsePropertyAccessMode(PropertyAccessMode.Field);
-
-            entity.Property(m => m.IsCancelled)
-                .HasField("_isCancelled")
-                .UsePropertyAccessMode(PropertyAccessMode.Field);
-
-            entity.HasOne(m => m.Room)
-                .WithMany()
-                .HasForeignKey(m => m.RoomId)
-                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex("UserId").IsUnique();
+            entity.HasIndex("RoomId").IsUnique();
 
             entity.HasOne(m => m.User)
-                .WithMany()
-                .HasForeignKey(m => m.UserId)
+                .WithOne()
+                .HasForeignKey<OccupancyMark>("UserId")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(m => m.Room)
+                .WithOne()
+                .HasForeignKey<OccupancyMark>("RoomId")
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
