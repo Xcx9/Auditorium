@@ -24,6 +24,5 @@ public class User
     public int Id => _id;
     public string Login => _login;
     public string PasswordHash => _passwordHash;
-
     public string GetDisplayName() => Login;
 }

@@ -1,4 +1,3 @@
-
 using Auditorium.Core.Services;
 
 namespace Auditorium.Core.Entities;
@@ -7,7 +6,7 @@ public class Room
 {
     private int _id;
     private string _number = string.Empty;
-    private RoomState _status;
+    private RoomState _status = RoomState.Free;
 
     private Room() { } // EF Core
 
@@ -42,4 +41,7 @@ public class Room
             ? result
             : 0;
     }
+    
+    public void SetStatus(RoomState status){_status = status;}
+    
 }

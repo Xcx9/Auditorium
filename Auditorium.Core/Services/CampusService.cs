@@ -1,3 +1,4 @@
+using System.ComponentModel.Design;
 using Auditorium.Core.Entities;
 using Auditorium.Core.Interfaces;
 
@@ -12,7 +13,7 @@ public enum RoomState
 public sealed class RoomStatusInfo
 {
     public Room Room { get; }
-    public RoomState State { get; }
+    public RoomState State { get; set; }
 
     public RoomStatusInfo(Room room, RoomState state)
     {
@@ -24,10 +25,12 @@ public sealed class RoomStatusInfo
 public class CampusService
 {
     private readonly IRoomRepository _rooms;
+    private readonly IMarkRepository _marks;
 
-    public CampusService(IRoomRepository rooms)
+    public CampusService(IRoomRepository rooms, IMarkRepository marks)
     {
         _rooms = rooms;
+        _marks = marks;
     }
 
     public RoomState GetStatus(Room room, DateTime now)
@@ -76,19 +79,41 @@ public class CampusService
         return result;
     }
 
-    public void GetOwnMark(int userId)
+    public async Task<OccupancyMark> GetOwnMark(int userId)
     {
+        var marks = await _marks.GetByIdAsync(userId);
         
+        foreach (var mark in marks.Where(mark => mark.UserId == userId))
+        {
+            return mark;
+        }
+        throw new ArgumentException("Mark for user not found.", nameof(userId));
     }
     
-    public void CreateMark(int userId)
+    public async Task<string> CreateMark(int userId, string roomId)
     {
+        OccupancyMark mark = new OccupancyMark(roomId, userId, DateTime.Now);
+        mark.Room.SetStatus(RoomState.Busy);
+        var marks = await _marks.GetByIdAsync(userId);
         
+        marks.Add(mark);
+        return "Success";
     }
     
-    public void CancelMark(int userId)
+    public async Task<string> CancelMark(int userId)
     {
-        
+        var marks = await _marks.GetByIdAsync(userId);
+        foreach (var mark in marks)
+        {
+            if (mark.UserId == userId)
+            {
+                Room room = mark.Room;
+                marks.Remove(mark);
+                room.SetStatus(RoomState.Free);
+                break;
+            }
+        }
+        return "Success";
     }
 
     public void ReleaseDueMarks(DateTime now)
