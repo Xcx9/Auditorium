@@ -5,6 +5,7 @@ namespace Auditorium.Core.Interfaces
         public interface ICampusStore
         { 
                 Task<List<Room>> GetAllRoomsAsync();
+                Task<Room?> GetRoomByIdAsync(int id);
                 Task<Room?> CheckRoomExistance(int roomId);
                 
                 Task<OccupancyMark?> GetActiveMarkByIdAsync(int userId);

@@ -20,6 +20,12 @@ public class CampusStore : ICampusStore
             .ToListAsync();
     }
 
+    public async Task<Room?> GetRoomByIdAsync(int id)
+    {
+        return await _context.Rooms
+            .FirstOrDefaultAsync(room => room.Id == id);
+    }
+
     public async Task<Room?> CheckRoomExistance(int roomId)
     {
         return await _context.Rooms
