@@ -4,7 +4,7 @@ namespace Auditorium.Core.Entities;
 
 public class Room 
 {
-    private int _id;
+    private int _room_id;
     private string _number = string.Empty;
     private RoomState _status = RoomState.Free;
 
@@ -18,7 +18,7 @@ public class Room
         _number = number;
     }
 
-    public int Id => _id;
+    public int Id => _room_id;
     public string Number => _number;
     public RoomState Status => _status;
     
@@ -43,5 +43,4 @@ public class Room
     }
     
     public void SetStatus(RoomState status){_status = status;}
-    
 }

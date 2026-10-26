@@ -40,9 +40,9 @@ public class CampusService
         return null;
     }
 
-    private async Task<CampusOperationResult?> IsRoomExist(int roomId)
+    private async Task<CampusOperationResult?> IsRoomExist(int? roomId)
     {
-        if (await _store.CheckRoomExistance(roomId) == null)
+        if (roomId == null || await _store.CheckRoomExistance(roomId) == null)
             return new CampusOperationResult(
                 CampusOperationCode.RoomNotFound,
                 "Комната не найдена");
@@ -57,7 +57,7 @@ public class CampusService
                 "Метки не существует.");
         return null;
     }
-    
+
     private CampusOperationResult? IsRoomFree(Room room)
     {
         if (room.Status == RoomState.Busy)
@@ -66,7 +66,8 @@ public class CampusService
                 "Аудитория уже занята другим пользователем.");
         return null;
     }
-    
+
+
     public RoomState GetStatus(Room room, DateTime now)
     {
         // Пока возвращаем сохранённое состояние.
@@ -75,12 +76,14 @@ public class CampusService
         return room.Status;
     }
     
+    
+    
     /// <summary>
     /// Метод для получения информации о свободных аудиториях
     /// </summary>
     /// <param name="building"></param>
     /// <param name="now"></param>
-    /// <returns></returns>
+    /// <returns>RoomStatusInfo</returns>
     public async Task<List<RoomStatusInfo>> FindFree(int building,
         DateTime now)
     {
@@ -98,7 +101,6 @@ public class CampusService
         }
         return result;
     }
-
     
     //TODO: Нужно где-то выводить случай не найденной комнаты
     /// <summary>
@@ -130,8 +132,6 @@ public class CampusService
                 "Отметка пользователя не найдена.");
         return new CampusOperationResult(
             CampusOperationCode.Success, "Ваша метка: " + mark.Room.Id + ", " + mark.Room.Status);
-            
-        
     }
     
     /// <summary>
@@ -142,22 +142,20 @@ public class CampusService
     /// <returns>ampusOperationResult</returns>
     public async Task<CampusOperationResult> CreateMark(int userId, int roomId)
     {
-        // TODO: Проверка на то что аудитория свободна, что пользователь существует
+        // TODO: Реализовать создание отметки в БД
         OccupancyMark mark = new OccupancyMark(roomId, userId, DateTime.Now);
 
-        var error = await IsUserExists(userId);
+        var error = await IsUserExists(userId)
+                    ?? await IsRoomExist(mark.RoomId) ?? IsRoomFree(mark.Room);
         if (error != null) return error;
         
-        error = await IsRoomExist(roomId);
-        if (error != null) return error;
-        IsRoomFree(mark.Room);
         mark.Room.SetStatus(RoomState.Busy);
         
         return new CampusOperationResult(
             CampusOperationCode.Success,
             "Аудитория занята.");
     }
-    
+
     /// <summary>
     /// Метод для отмены активной метки пользователя
     /// </summary>
@@ -165,33 +163,47 @@ public class CampusService
     /// <returns>CampusOperationalResult</returns>
     public async Task<CampusOperationResult> CancelMark(int userId)
     {
+        //TODO: Реалищовать удаление отметки из БД
         var mark = await _store.GetActiveMarkByIdAsync(userId);
-        if  (mark == null)
-            return new CampusOperationResult(
-                CampusOperationCode.MarkNotFound,
-                "Активная метка не найдена.");
         
-        var error = await IsUserExists(userId);
+        var error = await IsUserExists(userId)
+                    ?? await IsRoomExist(mark.RoomId);
         if (error != null) return error;
-        error = await IsRoomExist(mark.RoomId);
-        if (error != null) return error;
-        if (GetStatus(mark.Room, DateTime.Now) == RoomState.Busy)
+        
+        if (GetStatus(mark.Room, DateTime.Now) == RoomState.Busy && mark.UserId != userId)
             return new CampusOperationResult(
                 CampusOperationCode.RoomAlreadyOccupied,
-                "Комната уже занята");
+                "Комната занята другим пользователем.");
         
-        mark.Close(mark.Room);
+        if (GetStatus(mark.Room, DateTime.Now) == RoomState.Busy && mark.UserId == userId)
+        {
+            mark.Close(mark.Room);
+            return new CampusOperationResult(
+                CampusOperationCode.Success,
+                "Метка снята.");
+        }
+        
         return new CampusOperationResult(
-            CampusOperationCode.Success,
-            "Метка снята.");
+            CampusOperationCode.MarkNotFound,
+            "Активная метка не найдена.");
     }
-    
+
     /// <summary>
-    /// Метод для?
+    /// Метод для закрытия отметок у которых прошло время автоснятия
     /// </summary>
     /// <param name="now"></param>
-    public void ReleaseDueMarks(DateTime now)
+    public async Task<CampusOperationResult?> ReleaseDueMarks(DateTime now)
     {
-        
+        var marks = await _store.GetDueMarksAsync(now);
+
+        foreach (var mark in marks)
+        {
+            if (mark?.AutoReleaseAt  <= now)
+                mark.Close(mark.Room);
+        }
+
+        return new CampusOperationResult(
+            CampusOperationCode.Success,
+            "Метки с истекшим временем убраны.");
     }
 }

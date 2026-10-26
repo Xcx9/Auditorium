@@ -26,7 +26,7 @@ public class CampusStore : ICampusStore
             .FirstOrDefaultAsync(room => room.Id == id);
     }
 
-    public async Task<Room?> CheckRoomExistance(int roomId)
+    public async Task<Room?> CheckRoomExistance(int? roomId)
     {
         return await _context.Rooms
             .FirstOrDefaultAsync(room => room.Id == roomId);
@@ -47,11 +47,17 @@ public class CampusStore : ICampusStore
                 mark.UserId == userId && mark.ClosedAt == null);
     }
     
-    public async Task<OccupancyMark?> GetDueMarksAsync(DateTime now)
+    
+     public async Task<List<OccupancyMark?>> GetDueMarksAsync(
+        DateTimeOffset now)
     {
         return await _context.OccupancyMarks
-            .FirstOrDefaultAsync(mark => mark.ClosedAt <= now);
+            .Where(mark => mark.ClosedAt == null
+                           && mark.AutoReleaseAt != null
+                           && mark.AutoReleaseAt <= now)
+            .ToListAsync();
     }
+    
 
     public async Task<OccupancyMark?> CheckMarkExistance(int markId)
     {
