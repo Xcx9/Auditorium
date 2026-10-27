@@ -57,7 +57,18 @@ public class CampusStore : ICampusStore
                            && mark.AutoReleaseAt <= now)
             .ToListAsync();
     }
-    
+
+    public async Task AddMark(OccupancyMark mark)
+    {
+        await _context.OccupancyMarks.AddAsync(mark);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task RemoveMarkAsync(OccupancyMark mark)
+    {
+        _context.OccupancyMarks.Remove(mark);
+        await _context.SaveChangesAsync();
+    }
 
     public async Task<OccupancyMark?> CheckMarkExistance(int markId)
     {

@@ -49,15 +49,6 @@ public class CampusService
         return null;
     }
 
-    private async Task<CampusOperationResult?> IsMarkExist(int markId)
-    {
-        if (await _store.CheckMarkExistance(markId) == null)
-            return new CampusOperationResult(
-                CampusOperationCode.MarkNotFound,
-                "Метки не существует.");
-        return null;
-    }
-
     private CampusOperationResult? IsRoomFree(Room room)
     {
         if (room.Status == RoomState.Busy)
@@ -75,8 +66,20 @@ public class CampusService
         // и активные отметки.
         return room.Status;
     }
-    
-    
+
+    public async Task<DateTimeOffset?> FindNearOfficialLesson(DateTimeOffset now)
+    {
+        var marks = await _store.GetAllMarksAsync();
+        foreach (var mark in marks)
+        {
+            if (now < mark.CreatedAt && mark.Official)
+            {
+                return mark.CreatedAt;
+            }
+        }
+        
+        return DateTimeOffset.MaxValue;
+    }
     
     /// <summary>
     /// Метод для получения информации о свободных аудиториях
@@ -142,7 +145,6 @@ public class CampusService
     /// <returns>ampusOperationResult</returns>
     public async Task<CampusOperationResult> CreateMark(int userId, int roomId)
     {
-        // TODO: Реализовать создание отметки в БД
         OccupancyMark mark = new OccupancyMark(roomId, userId, DateTime.Now);
 
         var error = await IsUserExists(userId)
@@ -150,7 +152,8 @@ public class CampusService
         if (error != null) return error;
         
         mark.Room.SetStatus(RoomState.Busy);
-        
+        mark.SetAutoReleaseAt(await FindNearOfficialLesson(DateTimeOffset.Now)); // Выставляем на 1 пару?
+        await _store.AddMark(mark);
         return new CampusOperationResult(
             CampusOperationCode.Success,
             "Аудитория занята.");
@@ -163,7 +166,6 @@ public class CampusService
     /// <returns>CampusOperationalResult</returns>
     public async Task<CampusOperationResult> CancelMark(int userId)
     {
-        //TODO: Реалищовать удаление отметки из БД
         var mark = await _store.GetActiveMarkByIdAsync(userId);
         
         var error = await IsUserExists(userId)
@@ -177,7 +179,8 @@ public class CampusService
         
         if (GetStatus(mark.Room, DateTime.Now) == RoomState.Busy && mark.UserId == userId)
         {
-            mark.Close(mark.Room);
+            await _store.RemoveMarkAsync(mark);
+            mark.Close(mark);
             return new CampusOperationResult(
                 CampusOperationCode.Success,
                 "Метка снята.");
@@ -198,8 +201,9 @@ public class CampusService
 
         foreach (var mark in marks)
         {
-            if (mark?.AutoReleaseAt  <= now)
-                mark.Close(mark.Room);
+            if (!(mark?.AutoReleaseAt <= now)) continue;
+            await _store.RemoveMarkAsync(mark);
+            mark.Close(mark);
         }
 
         return new CampusOperationResult(

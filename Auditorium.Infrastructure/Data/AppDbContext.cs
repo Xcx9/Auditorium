@@ -1,4 +1,3 @@
-
 using Auditorium.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
