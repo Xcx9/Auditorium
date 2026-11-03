@@ -21,6 +21,9 @@ public class Room
     public int Id => _room_id;
     public string Number => _number;
     public RoomState Status => _status;
+
+    // Только даты с подтверждённым покрытием, включая дни без занятий.
+    public List<DateOnly> ScheduleDates { get; private set; } = new();
     
     public static bool IsValidNumber(string number)
     {
@@ -28,6 +31,8 @@ public class Room
     }
 
     public string FullName() => Number;
+    
+    public List<DateOnly> GetScheduleDates(){return ScheduleDates;}
 
     public int BuildingNumber()
     {

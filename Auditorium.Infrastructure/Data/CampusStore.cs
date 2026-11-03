@@ -32,6 +32,22 @@ public class CampusStore : ICampusStore
             .FirstOrDefaultAsync(room => room.Id == roomId);
     }
         
+    public Task<bool> HasActiveLessonAsync(int roomId, DateTimeOffset now)
+        => _context.ScheduleEntries.AnyAsync(lesson => lesson.RoomId == roomId
+            && lesson.StartsAt <= now && now < lesson.EndsAt);
+
+    public Task<DateTimeOffset?> GetNextLessonStartAsync(int roomId, DateTimeOffset now)
+        => _context.ScheduleEntries
+            .Where(lesson => lesson.RoomId == roomId && lesson.StartsAt > now)
+            .OrderBy(lesson => lesson.StartsAt)
+            .Select(lesson => (DateTimeOffset?)lesson.StartsAt)
+            .FirstOrDefaultAsync();
+
+    public Task<bool> HasActiveMarkForRoomAsync(int roomId)
+        => _context.OccupancyMarks.AnyAsync(mark => mark.RoomId == roomId && mark.ClosedAt == null);
+
+    public async Task SaveChangesAsync() => await _context.SaveChangesAsync();
+
     // ================ Marks ======================
     public async Task<List<OccupancyMark>> GetAllMarksAsync()
     {
@@ -43,12 +59,13 @@ public class CampusStore : ICampusStore
     public async Task<OccupancyMark?> GetActiveMarkByIdAsync(int userId)
     {
         return await _context.OccupancyMarks
+            .Include(mark => mark.Room)
             .FirstOrDefaultAsync(mark =>
                 mark.UserId == userId && mark.ClosedAt == null);
     }
     
     
-     public async Task<List<OccupancyMark?>> GetDueMarksAsync(
+     public async Task<List<OccupancyMark>> GetDueMarksAsync(
         DateTimeOffset now)
     {
         return await _context.OccupancyMarks

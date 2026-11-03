@@ -1,3 +1,5 @@
+using Auditorium.Core.Interfaces;
+using Auditorium.Infrastructure.Time;
 using Auditorium.Core.Services;
 using Auditorium.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -5,6 +7,10 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<IClock, MoscowClock>();
+builder.Services.AddScoped<ICampusStore, CampusStore>();
+builder.Services.AddScoped<CampusService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(
