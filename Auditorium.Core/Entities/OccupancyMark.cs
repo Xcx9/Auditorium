@@ -36,6 +36,29 @@ public class OccupancyMark
     }
 
     // Время передаёт сервис из IClock либо из времени наступившего автоснятия.
+    public void ApplySchedule(DateTimeOffset? nextLesson, bool coversPreviousDeadline, DateTimeOffset now)
+    {
+        if (ClosedAt.HasValue)
+            return;
+
+        if (AutoReleaseAt is { } known)
+        {
+            if (known <= now)
+            {
+                Close(known);
+                return;
+            }
+
+            if (!coversPreviousDeadline && (!nextLesson.HasValue || known < nextLesson.Value))
+                nextLesson = known;
+        }
+
+        SetAutoReleaseAt(nextLesson);
+        if (nextLesson is { } due && due <= now)
+            Close(due);
+    }
+
+    // Закрытие хранит момент события, даже если обработчик вызван позже.
     public void Close(DateTimeOffset closedAt)
     {
         if (ClosedAt.HasValue) return;

@@ -15,6 +15,7 @@ public class AppDbContext : DbContext
     public DbSet<Lesson> ScheduleEntries => Set<Lesson>();
     public DbSet<OccupancyMark> OccupancyMarks => Set<OccupancyMark>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<ScheduleImportState> ScheduleImportStates => Set<ScheduleImportState>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -29,6 +30,7 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Room>(entity =>
         {
             entity.HasKey(r => r.Id);
+            entity.Ignore(r => r.Status);
 
             entity.Property(r => r.Id)
                 .HasField("_room_id")
@@ -40,7 +42,15 @@ public class AppDbContext : DbContext
                 .IsRequired()
                 .UsePropertyAccessMode(PropertyAccessMode.Field);
 
-            entity.HasIndex(r => r.Number).IsUnique();
+            entity.HasIndex(r => r.Number);
+            entity.HasIndex(r => r.SourceScheduleCode).IsUnique();
+        });
+
+        modelBuilder.Entity<ScheduleImportState>(entity =>
+        {
+            entity.ToTable("ScheduleImportState", table => table.HasCheckConstraint("CK_ScheduleImportState_Singleton", "Id = 1"));
+            entity.Property(state => state.Id).ValueGeneratedNever();
+            entity.Property(state => state.LastSuccessfulUpdate).HasConversion(utcTicks);
         });
 
         modelBuilder.Entity<Lesson>(entity =>

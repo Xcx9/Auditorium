@@ -21,6 +21,12 @@ public sealed class MoscowClock : IClock
     public DateOnly GetDate(DateTimeOffset instant) => DateOnly.FromDateTime(
         TimeZoneInfo.ConvertTime(instant, MoscowZone).DateTime);
 
+    internal static DateTimeOffset AtLocalTime(DateOnly date, TimeOnly time)
+    {
+        var local = date.ToDateTime(time);
+        return new DateTimeOffset(local, MoscowZone.GetUtcOffset(local));
+    }
+
     private static TimeZoneInfo FindMoscowTimeZone()
     {
         try

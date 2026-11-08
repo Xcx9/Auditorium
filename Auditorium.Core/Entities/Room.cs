@@ -20,10 +20,23 @@ public class Room
 
     public int Id => _room_id;
     public string Number => _number;
+    public int? SourceScheduleCode { get; private set; }
     public RoomState Status => _status;
 
     // Только даты с подтверждённым покрытием, включая дни без занятий.
     public List<DateOnly> ScheduleDates { get; private set; } = new();
+
+    public void ApplySchedule(int sourceCode, string number, IEnumerable<DateOnly> dates)
+    {
+        if (sourceCode <= 0 || SourceScheduleCode is { } current && current != sourceCode)
+            throw new ArgumentException("Код аудитории должен быть положительным и постоянным.", nameof(sourceCode));
+        if (!IsValidNumber(number) || number.Length > 20)
+            throw new ArgumentException("Некорректный номер аудитории.", nameof(number));
+
+        SourceScheduleCode = sourceCode;
+        _number = number;
+        ScheduleDates = dates.Distinct().Order().ToList();
+    }
     
     public static bool IsValidNumber(string number)
     {

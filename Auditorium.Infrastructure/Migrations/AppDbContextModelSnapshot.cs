@@ -87,12 +87,14 @@ namespace Auditorium.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Status")
+                    b.Property<int?>("SourceScheduleCode")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Number")
+                    b.HasIndex("Number");
+
+                    b.HasIndex("SourceScheduleCode")
                         .IsUnique();
 
                     b.ToTable("Rooms");
@@ -119,6 +121,25 @@ namespace Auditorium.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Auditorium.Infrastructure.Data.ScheduleImportState", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("LastSuccessfulUpdate")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("UpdateFailed")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ScheduleImportState", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ScheduleImportState_Singleton", "Id = 1");
+                        });
                 });
 
             modelBuilder.Entity("Auditorium.Core.Entities.Lesson", b =>

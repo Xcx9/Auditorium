@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="Auditorium.Core/Auditorium.Core.csproj" />
   <Project Path="Auditorium.Infrastructure/Auditorium.Infrastructure.csproj" />
+  <Project Path="Auditorium.Tests/Auditorium.Tests.csproj" />
   <Project Path="Auditorium.Web/Auditorium.Web.csproj" Id="2a36a38f-c93f-45e7-b5b5-445579b6f389" />
 </Solution>
