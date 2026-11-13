@@ -30,7 +30,6 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Room>(entity =>
         {
             entity.HasKey(r => r.Id);
-            entity.Ignore(r => r.Status);
 
             entity.Property(r => r.Id)
                 .HasField("_room_id")

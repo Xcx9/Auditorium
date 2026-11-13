@@ -13,9 +13,9 @@ public enum RoomState
 public sealed class RoomStatusInfo
 {
     public Room Room { get; }
-    public RoomState State { get; }
+    public RoomState? State { get; }
 
-    public RoomStatusInfo(Room room, RoomState state)
+    public RoomStatusInfo(Room room, RoomState? state)
     {
         Room = room;
         State = state;
@@ -33,20 +33,21 @@ public class CampusService
         _clock = clock;
     }
 
-    public async Task<RoomState> GetStatus(Room room)
+    public async Task<RoomState> GetStatusNow(Room room)
     {
         var now = _clock.UtcNow;
         await ReleaseDueMarksAt(now);
-        return await GetStatusAt(room, now);
+        return await GetStatusAt(room, now)
+            ?? throw new InvalidOperationException("Нет данных расписания на текущую московскую дату.");
     }
 
-    private async Task<RoomState> GetStatusAt(Room room, DateTimeOffset now)
+    private async Task<RoomState?> GetStatusAt(Room room, DateTimeOffset now)
     {
-        if (!HasScheduleFor(room, now))
-            throw new InvalidOperationException("Нет данных расписания на текущую московскую дату.");
-        return await _store.HasActiveLessonAsync(room.Id, now)
-            || await _store.HasActiveMarkForRoomAsync(room.Id)
-            ? RoomState.Busy : RoomState.Free;
+        var date = _clock.GetDate(now);
+        var isOccupied = room.ScheduleDates.Contains(date)
+            && (await _store.HasActiveLessonAsync(room.Id, now)
+                || await _store.HasActiveMarkForRoomAsync(room.Id));
+        return room.Status(date, isOccupied);
     }
 
     private bool HasScheduleFor(Room room, DateTimeOffset now)
@@ -55,27 +56,28 @@ public class CampusService
     public Task<DateTimeOffset?> FindNearOfficialLesson(int roomId)
         => _store.GetNextLessonStartAsync(roomId, _clock.UtcNow);
 
-    public async Task<List<RoomStatusInfo>> FindFree(int building)
+    public async Task<List<RoomStatusInfo>> GetRooms()
     {
         var now = _clock.UtcNow;
         await ReleaseDueMarksAt(now);
+        var date = _clock.GetDate(now);
         var rooms = await _store.GetAllRoomsAsync();
-        var result = new List<RoomStatusInfo>();
-        foreach (var room in rooms)
-        {
-            if (room.BuildingNumber() != building || !HasScheduleFor(room, now)) continue;
-            var status = await GetStatusAt(room, now);
-            if (status == RoomState.Free) result.Add(new RoomStatusInfo(room, status));
-        }
-        return result;
+        var occupiedRoomIds = (await _store.GetOccupiedRoomIdsAsync(now)).ToHashSet();
+        return rooms.Select(room => new RoomStatusInfo(room, room.Status(date, occupiedRoomIds.Contains(room.Id))))
+            .ToList();
     }
+
+    public async Task<List<RoomStatusInfo>> FindFree(int building)
+        => (await GetRooms())
+            .Where(room => room.State == RoomState.Free && room.Room.BuildingNumber() == building)
+            .ToList();
 
     public async Task<RoomStatusInfo?> GetRoom(int roomId)
     {
         var now = _clock.UtcNow;
         await ReleaseDueMarksAt(now);
         var room = await _store.GetRoomByIdAsync(roomId);
-        return room == null || !HasScheduleFor(room, now)
+        return room == null
             ? null : new RoomStatusInfo(room, await GetStatusAt(room, now));
     }
 
@@ -87,7 +89,7 @@ public class CampusService
             ? new(CampusOperationCode.MarkNotFound, "Активная отметка не найдена.")
             : new(CampusOperationCode.Success, $"Ваша аудитория: {mark.Room.Number}, занято.");
     }
-
+    
     public async Task<CampusOperationResult> CreateMark(int userId, int roomId)
     {
         var now = _clock.UtcNow;
@@ -105,22 +107,29 @@ public class CampusService
 
         var mark = new OccupancyMark(roomId, userId, now);
         mark.SetAutoReleaseAt(await _store.GetNextLessonStartAsync(roomId, now));
-        await _store.AddMark(mark);
-        mark.Room.SetStatus(RoomState.Busy);
+        bool result = await _store.AddMark(mark);
+        if (!result)
+            return new(CampusOperationCode.ConcurrentConflict, "Не удалось создать отметку. Повторите попытку.");
         return new(CampusOperationCode.Success, "Аудитория отмечена занятой.");
     }
 
-    public async Task<CampusOperationResult> CancelMark(int userId)
+    public async Task<CampusOperationResult> CancelMark(int userId, int markId)
     {
         var now = _clock.UtcNow;
         await ReleaseDueMarksAt(now);
         if (await _store.CheckUserExistance(userId) == null)
             return new(CampusOperationCode.UserNotFound, "Пользователь не найден.");
-        var mark = await _store.GetActiveMarkByIdAsync(userId);
-        if (mark == null) return new(CampusOperationCode.MarkNotFound, "Активная отметка не найдена.");
-        mark.Room.SetStatus(RoomState.Free);
-        mark.Close(now);
-        await _store.SaveChangesAsync();
+        var mark = await _store.CheckMarkExistance(markId);
+
+        if (mark == null)
+            return new(CampusOperationCode.MarkNotFound, "Отметка не найдена.");
+        if (mark.UserId != userId)
+            return new(CampusOperationCode.NotOwner, "Снять отметку может только её автор.");
+        if (mark.ClosedAt != null)
+            return new(CampusOperationCode.MarkAlreadyClosed, "Отметка уже закрыта.");
+        if (!await _store.RemoveMarkAsync(userId, markId, now))
+            return new(CampusOperationCode.MarkAlreadyClosed, "Отметка уже закрыта.");
+
         return new(CampusOperationCode.Success, "Отметка снята.");
     }
 
@@ -131,13 +140,7 @@ public class CampusService
 
     private async Task<CampusOperationResult?> ReleaseDueMarksAt(DateTimeOffset now)
     {
-        var marks = await _store.GetDueMarksAsync(now);
-        foreach (var mark in marks)
-        {
-            if (mark.ClosedAt == null && mark.AutoReleaseAt is { } due && due <= now)
-                mark.Close(due);
-        }
-        if (marks.Count != 0) await _store.SaveChangesAsync();
+        await _store.CloseDueMarksAsync(now);
         return new(CampusOperationCode.Success, "Наступившие отметки закрыты.");
     }
 }

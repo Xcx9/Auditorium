@@ -5,6 +5,7 @@ namespace Auditorium.Core.Interfaces;
 public interface ICampusStore
 {
     Task<List<Room>> GetAllRoomsAsync();
+    Task<List<int>> GetOccupiedRoomIdsAsync(DateTimeOffset now);
     Task<Room?> GetRoomByIdAsync(int id);
     Task<Room?> CheckRoomExistance(int? roomId);
     Task<bool> HasActiveLessonAsync(int roomId, DateTimeOffset now);
@@ -12,10 +13,11 @@ public interface ICampusStore
     Task<bool> HasActiveMarkForRoomAsync(int roomId);
     Task<List<OccupancyMark>> GetAllMarksAsync();
     Task<OccupancyMark?> GetActiveMarkByIdAsync(int userId);
-    Task<List<OccupancyMark>> GetDueMarksAsync(DateTimeOffset now);
+    Task<int> CloseDueMarksAsync(DateTimeOffset now);
     Task<OccupancyMark?> CheckMarkExistance(int markId);
-    Task AddMark(OccupancyMark mark);
-    Task RemoveMarkAsync(OccupancyMark mark);
+    Task<bool> AddMark(OccupancyMark mark);
+    Task<bool> RemoveMarkAsync(int userId, int markId, DateTimeOffset closedAt);
+
     Task SaveChangesAsync();
     Task<User?> CheckUserExistance(int userId);
 }

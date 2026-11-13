@@ -1,5 +1,6 @@
 using Auditorium.Core.Entities;
 using Auditorium.Core.Interfaces;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
 namespace Auditorium.Infrastructure.Data;
@@ -7,6 +8,7 @@ namespace Auditorium.Infrastructure.Data;
 public class CampusStore : ICampusStore
 {
     private readonly AppDbContext _context;
+    private const int SqliteConstraintUnique = 2067;
 
     public CampusStore(AppDbContext context)
     {
@@ -33,8 +35,15 @@ public class CampusStore : ICampusStore
     }
         
     public Task<bool> HasActiveLessonAsync(int roomId, DateTimeOffset now)
-        => _context.ScheduleEntries.AnyAsync(lesson => lesson.RoomId == roomId
-            && lesson.StartsAt <= now && now < lesson.EndsAt);
+        => ActiveLessonsAt(now).AnyAsync(lesson => lesson.RoomId == roomId);
+
+    public Task<List<int>> GetOccupiedRoomIdsAsync(DateTimeOffset now)
+        => ActiveLessonsAt(now).Select(lesson => lesson.RoomId)
+            .Union(ActiveMarks.Select(mark => mark.RoomId))
+            .ToListAsync();
+
+    private IQueryable<Lesson> ActiveLessonsAt(DateTimeOffset now)
+        => _context.ScheduleEntries.Where(lesson => lesson.StartsAt <= now && now < lesson.EndsAt);
 
     public Task<DateTimeOffset?> GetNextLessonStartAsync(int roomId, DateTimeOffset now)
         => _context.ScheduleEntries
@@ -44,7 +53,10 @@ public class CampusStore : ICampusStore
             .FirstOrDefaultAsync();
 
     public Task<bool> HasActiveMarkForRoomAsync(int roomId)
-        => _context.OccupancyMarks.AnyAsync(mark => mark.RoomId == roomId && mark.ClosedAt == null);
+        => ActiveMarks.AnyAsync(mark => mark.RoomId == roomId);
+
+    private IQueryable<OccupancyMark> ActiveMarks
+        => _context.OccupancyMarks.Where(mark => mark.ClosedAt == null);
 
     public async Task SaveChangesAsync() => await _context.SaveChangesAsync();
 
@@ -65,28 +77,52 @@ public class CampusStore : ICampusStore
     }
     
     
-     public async Task<List<OccupancyMark>> GetDueMarksAsync(
-        DateTimeOffset now)
+    public Task<int> CloseDueMarksAsync(DateTimeOffset now)
     {
-        return await _context.OccupancyMarks
+        return _context.OccupancyMarks
             .Where(mark => mark.ClosedAt == null
                            && mark.AutoReleaseAt != null
                            && mark.AutoReleaseAt <= now)
-            .ToListAsync();
+            .ExecuteUpdateAsync(update => update
+                .SetProperty(mark => mark.ClosedAt, mark => mark.AutoReleaseAt));
     }
 
-    public async Task AddMark(OccupancyMark mark)
+    public async Task<bool> AddMark(OccupancyMark mark)
     {
-        await _context.OccupancyMarks.AddAsync(mark);
-        await _context.SaveChangesAsync();
+        _context.OccupancyMarks.Add(mark);
+        try
+        {
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        catch (DbUpdateException ex) when (
+            ex.InnerException is SqliteException sqlite &&
+            sqlite.SqliteExtendedErrorCode == SqliteConstraintUnique)
+        {
+            _context.Entry(mark).State = EntityState.Detached;
+            return false;
+        }
     }
 
-    public async Task RemoveMarkAsync(OccupancyMark mark)
+    /*public async Task RemoveMarkAsync(OccupancyMark mark)
     {
         _context.OccupancyMarks.Remove(mark);
         await _context.SaveChangesAsync();
-    }
+    }*/
+    
+    public async Task<bool> RemoveMarkAsync(
+        int userId, int markId, DateTimeOffset closedAt)
+    {
+        var updatedRows = await _context.OccupancyMarks
+            .Where(mark => mark.Id == markId
+                           && mark.UserId == userId
+                           && mark.ClosedAt == null)
+            .ExecuteUpdateAsync(update => update
+                .SetProperty(mark => mark.ClosedAt, (DateTimeOffset?)closedAt));
 
+        return updatedRows == 1;
+    }
+    
     public async Task<OccupancyMark?> CheckMarkExistance(int markId)
     {
         return await _context.OccupancyMarks

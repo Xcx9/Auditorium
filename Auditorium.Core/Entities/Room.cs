@@ -6,7 +6,6 @@ public class Room
 {
     private int _room_id;
     private string _number = string.Empty;
-    private RoomState _status = RoomState.Free;
 
     private Room() { } // EF Core
 
@@ -21,10 +20,17 @@ public class Room
     public int Id => _room_id;
     public string Number => _number;
     public int? SourceScheduleCode { get; private set; }
-    public RoomState Status => _status;
 
     // Только даты с подтверждённым покрытием, включая дни без занятий.
     public List<DateOnly> ScheduleDates { get; private set; } = new();
+
+    public RoomState? Status(DateOnly date, bool isOccupied)
+    {
+        if (!ScheduleDates.Contains(date))
+            return null;
+
+        return isOccupied ? RoomState.Busy : RoomState.Free;
+    }
 
     public void ApplySchedule(int sourceCode, string number, IEnumerable<DateOnly> dates)
     {
@@ -59,6 +65,4 @@ public class Room
             ? result
             : 0;
     }
-    
-    public void SetStatus(RoomState status){_status = status;}
 }
