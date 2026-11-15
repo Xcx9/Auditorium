@@ -1,0 +1,41 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 15
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam ArrowColor #34495E
+skinparam classAttributeIconSize 0
+skinparam usecaseBackgroundColor #F3F7FB
+skinparam classBackgroundColor #F3F7FB
+skinparam activityBackgroundColor #F3F7FB
+skinparam conditionStyle diamond
+skinparam sequenceMessageAlign center
+hide footbox
+title SmartCampus — автоматическое снятие отметки
+participant "Планировщик /\nобработчик запроса" as T
+control CampusService as S
+participant "Серверные часы" as C
+database Хранилище as DB
+T -> S : ReleaseDueMarks(now)\nпри событии, запросе или восстановлении
+S -> C : текущее московское время
+C --> S : now
+S -> DB : прочитать активные отметки\nи последнее корректное расписание
+DB --> S : данные
+loop для каждой активной отметки
+ S -> S : определить начало следующего занятия\nпосле CreatedAt по известным данным
+ alt AutoReleaseAt известен и now >= AutoReleaseAt
+  S -> DB : закрыть отметку временем начала занятия
+  DB --> S : сохранено
+ else следующего занятия нет или оно еще не началось
+  S -> S : оставить отметку активной
+ end
+end
+S --> T : обработка завершена
+note over S, DB
+При начале занятия отметка снимается, но Room остается «занято».
+В момент окончания занятия без новой отметки Room становится «свободно».
+Интервал занятия: StartsAt <= now < EndsAt.
+Если новые данные недоступны, используется последняя корректная копия.
+end note
+@enduml

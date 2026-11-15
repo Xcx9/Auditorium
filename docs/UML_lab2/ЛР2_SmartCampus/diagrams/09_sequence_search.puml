@@ -1,0 +1,44 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 15
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam ArrowColor #34495E
+skinparam classAttributeIconSize 0
+skinparam usecaseBackgroundColor #F3F7FB
+skinparam classBackgroundColor #F3F7FB
+skinparam activityBackgroundColor #F3F7FB
+skinparam conditionStyle diamond
+skinparam sequenceMessageAlign center
+hide footbox
+title SmartCampus — поиск и карточка аудитории
+actor Пользователь as U
+boundary Интерфейс as UI
+control CampusService as S
+participant "Серверные часы" as C
+database Хранилище as DB
+U -> UI : «Свободные сейчас», фильтры
+UI -> S : FindFree(building, numberPart)
+S -> C : текущее московское время
+C --> S : now
+S -> DB : снять наступившие отметки;\nпрочитать аудитории, занятия, отметки, копию
+DB --> S : согласованные данные
+S -> S : исключить аудитории без данных на дату;\nвычислить Room.Status и применить фильтры
+S --> UI : свободные аудитории; сообщения об отсутствии данных;\nпредупреждение и время копии при ошибке обновления
+UI --> U : результаты поиска
+opt пользователь выбирает аудиторию
+ U -> UI : открыть карточку
+ UI -> S : GetRoom(roomId)
+ S -> C : новое текущее время
+ C --> S : now
+ S -> DB : обработать автоснятие; прочитать текущие данные
+ DB --> S : данные аудитории
+ alt данные на дату имеются
+  S --> UI : номер, корпус, пересчитанный статус
+ else данных на дату нет
+  S --> UI : номер, корпус, сообщение об отсутствии данных;\nсоздание отметки недоступно
+ end
+ UI --> U : карточка и предупреждение при сбое обновления
+end
+@enduml

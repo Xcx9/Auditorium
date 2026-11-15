@@ -1,0 +1,49 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 15
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam ArrowColor #34495E
+skinparam classAttributeIconSize 0
+skinparam usecaseBackgroundColor #F3F7FB
+skinparam classBackgroundColor #F3F7FB
+skinparam activityBackgroundColor #F3F7FB
+skinparam conditionStyle diamond
+skinparam sequenceMessageAlign center
+hide footbox
+title SmartCampus — просмотр и снятие своей отметки
+actor Пользователь as U
+boundary Интерфейс as UI
+control CampusService as S
+database Хранилище as DB
+U -> UI : «Моя отметка»
+UI -> S : GetOwnMark(userId из сессии)
+S -> DB : обработать наступившее автоснятие;\nнайти активную отметку пользователя
+DB --> S : отметка или отсутствие
+S --> UI : результат просмотра
+UI --> U : своя отметка или «активной отметки нет»
+opt пользователь нажал «Снять отметку»
+ U -> UI : снять показанную отметку
+ UI -> S : CancelMark(userId из сессии, markId)
+ critical проверка автора и закрытие
+  S -> DB : найти отметку по markId
+  DB --> S : запись или отсутствие
+  alt отметка чужая
+   S --> UI : отказ в доступе, данные не изменены
+  else отметка отсутствует или уже закрыта
+   S --> UI : активной отметки уже нет
+  else своя активная отметка
+   S -> DB : установить ClosedAt = серверное now; сохранить
+   DB --> S : сохранено
+   S --> UI : отметка снята
+  end
+ end
+ UI --> U : результат снятия
+end
+note over S, DB
+Доступность расписания не проверяется как условие снятия.
+После снятия аудитория может оставаться занятой по расписанию.
+Не обещаем «свободно» без повторного расчета по актуальным данным.
+end note
+@enduml

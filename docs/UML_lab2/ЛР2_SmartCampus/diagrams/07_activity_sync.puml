@@ -1,0 +1,41 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 15
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam ArrowColor #34495E
+skinparam classAttributeIconSize 0
+skinparam usecaseBackgroundColor #F3F7FB
+skinparam classBackgroundColor #F3F7FB
+skinparam activityBackgroundColor #F3F7FB
+skinparam conditionStyle diamond
+skinparam sequenceMessageAlign center
+hide footbox
+title SmartCampus — обновление расписания
+start
+:Запуск системы или очередной интервал <= 60 минут;
+:Запросить официальное расписание МИЭТ;
+if (Источник доступен?) then (да)
+ :Разобрать данные во временную копию;\nпроверить даты, времена, аудитории и полноту;
+ if (Разбор полностью успешен?) then (да)
+  :Атомарно заменить локальную копию;\nсформировать каталог аудиторий и покрытие дат;
+  :Сохранить время успешного обновления;\nснять признак ошибки обновления;
+  :Пересчитать автоматическое снятие\nи текущие статусы;
+ else (нет)
+  :Не подменять корректную копию неполными данными;\nсохранить признак ошибки;
+ endif
+else (нет)
+ :Сохранить прежнюю копию и время ее обновления;\nустановить признак ошибки;
+endif
+if (Обновление не удалось?) then (да)
+ if (Сохраненная копия существует?) then (да)
+  :Использовать ее для покрытых дат;\nпоказывать предупреждение и время обновления;
+ else (нет)
+  :Сообщить, что расписание еще не загружено;
+ endif
+else (нет)
+endif
+:Аудитории без данных на сегодня исключить из поиска;\nснятие собственных отметок оставить доступным;
+stop
+@enduml

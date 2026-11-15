@@ -1,0 +1,61 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 15
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam ArrowColor #34495E
+skinparam classAttributeIconSize 0
+skinparam usecaseBackgroundColor #F3F7FB
+skinparam classBackgroundColor #F3F7FB
+skinparam activityBackgroundColor #F3F7FB
+skinparam conditionStyle diamond
+skinparam sequenceMessageAlign center
+hide footbox
+title SmartCampus — взаимодействие программных частей
+left to right direction
+class "Веб-интерфейс" as Web <<boundary>>
+class AuthService <<service>> {
+ + Register(login, password)
+ + Login(login, password)
+}
+class CampusService <<service>> {
+ + FindFree(building, numberPart)
+ + GetRoom(roomId)
+ + GetOwnMark(userId)
+ + CreateMark(userId, roomId)
+ + CancelMark(userId, markId)
+ + ReleaseDueMarks(now)
+}
+class ScheduleParser <<service>> {
+ + LoadAndValidate()
+}
+class ScheduleUpdater <<service>> {
+ + Refresh()
+}
+class "Серверные часы" as Clock <<infrastructure>>
+class "Хранилище данных" as Store <<infrastructure>>
+class "Планировщик" as Timer <<infrastructure>>
+Web --> AuthService
+Web --> CampusService
+CampusService --> Clock
+CampusService --> Store
+AuthService --> Store
+ScheduleUpdater --> ScheduleParser
+ScheduleUpdater --> Store
+ScheduleUpdater --> CampusService : пересчитать после обновления
+Timer --> ScheduleUpdater : запуск / интервал <= 60 минут
+Timer --> CampusService : начало занятия
+note bottom of Store
+ Постоянное хранение User, Room, OccupancyMark,
+ Lesson и ScheduleSnapshot из диаграммы 03.
+ Транзакция и уникальность активных отметок
+ по UserId и RoomId защищают от одновременных запросов.
+end note
+note bottom of CampusService
+ Это операции над сущностями, а не дополнительные
+ классы для каждого значения или статуса.
+ Диаграмма описывает проект веб-системы.
+ Учебный консольный пример реализует ядро отметок.
+end note
+@enduml

@@ -1,0 +1,70 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 15
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam ArrowColor #34495E
+skinparam classAttributeIconSize 0
+skinparam usecaseBackgroundColor #F3F7FB
+skinparam classBackgroundColor #F3F7FB
+skinparam activityBackgroundColor #F3F7FB
+skinparam conditionStyle diamond
+skinparam sequenceMessageAlign center
+hide footbox
+title SmartCampus — путь пользователя
+start
+:Открыть SmartCampus;
+if (Есть учетная запись?) then (нет)
+ :Ввести данные регистрации;
+ :Проверить формат и уникальность логина;
+ if (Данные корректны?) then (нет)
+  :Показать ошибку регистрации;
+  stop
+ else (да)
+ endif
+ :Сохранить учетную запись с хешем пароля;
+else (да)
+endif
+:Ввести логин и пароль;
+if (Вход выполнен?) then (нет)
+ :Показать ошибку входа;
+ stop
+else (да)
+endif
+while (Продолжить работу?) is (да)
+ :Выбрать действие;
+ if (Выбрано «Свободные сейчас»?) then (да)
+  :Задать корпус и/или часть номера;
+  :Определить серверное время по Москве;\nснять отметки, срок которых наступил;
+  :Проверить покрытие расписания на текущую дату;\nисключить аудитории без данных с сообщением;
+  :Пересчитать статусы; показать свободные аудитории;\nпри сбое обновления — предупреждение и время копии;
+  if (Аудитория выбрана?) then (да)
+   :Открыть карточку; заново вычислить статус;
+   if (Нажато «Отметить занятой»?) then (да)
+    :Выполнить создание отметки\nпо диаграмме 06;
+    :Показать результат;
+   else (нет)
+   endif
+  else (нет)
+  endif
+ else (нет)
+ if (Выбрано «Моя отметка»?) then (да)
+  :Обработать наступившее автоматическое снятие;\nнайти свою активную отметку;
+  if (Своя активная отметка есть?) then (да)
+   :Показать свою отметку;
+   if (Нажато «Снять отметку»?) then (да)
+    :Проверить авторство и закрыть отметку атомарно;\nрасписание не является условием снятия;
+    :Показать результат снятия;
+   else (нет)
+   endif
+  else (нет)
+   :Сообщить, что активной отметки нет;
+  endif
+ else (завершить работу)
+  stop
+ endif
+ endif
+endwhile (нет)
+stop
+@enduml
