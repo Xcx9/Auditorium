@@ -17,89 +17,132 @@ namespace Auditorium.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.12");
 
-            modelBuilder.Entity("Auditorium.Core.Entities.Audience", b =>
+            modelBuilder.Entity("Auditorium.Core.Entities.OccupancyMark", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Name")
-                        .HasMaxLength(100)
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsCancelled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RoomId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Audiences");
+                    b.HasIndex("RoomId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("OccupancyMarks");
                 });
 
-            modelBuilder.Entity("Auditorium.Core.Entities.Lesson", b =>
+            modelBuilder.Entity("Auditorium.Core.Entities.Room", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("AudienceId")
+                    b.Property<bool>("IsEnabled")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("Day")
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("State")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("DayNumber")
+                    b.HasKey("Id");
+
+                    b.HasIndex("Number")
+                        .IsUnique();
+
+                    b.ToTable("Rooms");
+                });
+
+            modelBuilder.Entity("Auditorium.Core.Entities.ScheduleEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("GroupName")
-                        .HasMaxLength(50)
+                    b.Property<DateTime>("End")
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("RoomCode")
+                    b.Property<int>("RoomId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("RoomName")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Semester")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Subject")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Teacher")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("TeacherFull")
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Time")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("TimeFrom")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("TimeTo")
+                    b.Property<DateTime>("Start")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AudienceId");
+                    b.HasIndex("RoomId");
 
-                    b.ToTable("Lessons");
+                    b.ToTable("ScheduleEntries");
                 });
 
-            modelBuilder.Entity("Auditorium.Core.Entities.Lesson", b =>
+            modelBuilder.Entity("Auditorium.Core.Entities.User", b =>
                 {
-                    b.HasOne("Auditorium.Core.Entities.Audience", null)
-                        .WithMany("Lessons")
-                        .HasForeignKey("AudienceId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Login")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT")
+                        .UseCollation("NOCASE");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Login")
+                        .IsUnique();
+
+                    b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("Auditorium.Core.Entities.Audience", b =>
+            modelBuilder.Entity("Auditorium.Core.Entities.OccupancyMark", b =>
                 {
-                    b.Navigation("Lessons");
+                    b.HasOne("Auditorium.Core.Entities.Room", "Room")
+                        .WithMany()
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Auditorium.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Room");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Auditorium.Core.Entities.ScheduleEntry", b =>
+                {
+                    b.HasOne("Auditorium.Core.Entities.Room", "Room")
+                        .WithMany()
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Room");
                 });
 #pragma warning restore 612, 618
         }
