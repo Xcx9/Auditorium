@@ -1,0 +1,9 @@
+{
+  "Times": [{"Time":"3 пара","Code":3,"TimeFrom":"0001-01-01T12:00:00","TimeTo":"0001-01-01T13:20:00"}],
+  "Data": [
+    {"Day":0,"DayNumber":1,"Time":{"Code":3,"TimeFrom":"0001-01-01T12:30:00","TimeTo":"0001-01-01T13:50:00"},"Room":{"Code":120,"Name":"3201 м"}},
+    {"Day":0,"DayNumber":1,"Time":{"Code":3,"TimeFrom":"0001-01-01T12:30:00","TimeTo":"0001-01-01T13:50:00"},"Room":{"Code":120,"Name":"3201 м"}},
+    {"Day":1,"DayNumber":2,"Time":{"Code":3,"TimeFrom":"0001-01-01T12:00:00","TimeTo":"0001-01-01T13:20:00"},"Room":{"Code":120,"Name":"3201 м"}}
+  ],
+  "Semestr":"Осенний семестр 2026/2027"
+}

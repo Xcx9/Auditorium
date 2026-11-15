@@ -1,16 +1,53 @@
+using Auditorium.Infrastructure.Scheduling;
+using Auditorium.Core.DTOs;
+using Auditorium.Core.Interfaces;
+using Auditorium.Infrastructure.Time;
 using Auditorium.Core.Services;
 using Auditorium.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
-var builder = WebApplication.CreateBuilder(args);
+var refreshSchedule = args.FirstOrDefault() == "refresh-schedule";
+var builder = WebApplication.CreateBuilder(refreshSchedule ? [] : args);
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddHttpClient<IScheduleParser, ScheduleParser>(client =>
+    client.Timeout = TimeSpan.FromSeconds(30));
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<IClock, MoscowClock>();
+builder.Services.AddScoped<ICampusStore, CampusStore>();
+builder.Services.AddScoped<CampusService>();
+builder.Services.AddScoped<IScheduleSnapshotStore, ScheduleSnapshotStore>();
+builder.Services.AddScoped<ScheduleUpdater>();
 
-builder.Services.AddDbContext<AppDbContext>(options =>
+builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlite(
         builder.Configuration.GetConnectionString("DefaultConnection")));
 
-var app = builder.Build();
+await using var app = builder.Build();
+
+if (refreshSchedule)
+{
+    if (args.Length != 4 || !DateOnly.TryParseExact(args[2], "yyyy-MM-dd", out var from) ||
+        !DateOnly.TryParseExact(args[3], "yyyy-MM-dd", out var through))
+    {
+        Console.Error.WriteLine("Использование: refresh-schedule <семестр> <ГГГГ-ММ-ДД> <ГГГГ-ММ-ДД>");
+        Environment.ExitCode = 2;
+        return;
+    }
+
+    await using var scope = app.Services.CreateAsyncScope();
+    var updater = scope.ServiceProvider.GetRequiredService<ScheduleUpdater>();
+    var result = await updater.Refresh(new ScheduleLoadRequest(args[1], from, through));
+    if (result.Succeeded)
+        Console.WriteLine("Расписание сохранено.");
+    else
+    {
+        Console.Error.WriteLine(result.Error);
+        Environment.ExitCode = 1;
+    }
+
+    return;
+}
 
 if (!app.Environment.IsDevelopment())
 {

@@ -169,3 +169,9 @@ $RECYCLE.BIN/
 # ============================================
 # .dockerignore создается отдельно
 docker-compose.override.yml
+
+/Auditorium.Web/backups/
+
+__pycache__/
+
+*.py[cod]

@@ -1,4 +1,3 @@
-
 namespace Auditorium.Core.Entities;
 
 public class User
@@ -12,11 +11,11 @@ public class User
     public User(string login, string passwordHash)
     {
         if (string.IsNullOrWhiteSpace(login))
-            throw new ArgumentException("Логин обязателен.", nameof(login));
+            throw new ArgumentException("Login required.", nameof(login));
 
         if (string.IsNullOrWhiteSpace(passwordHash))
             throw new ArgumentException(
-                "Хеш пароля обязателен.", nameof(passwordHash));
+                "passwordHash required.", nameof(passwordHash));
 
         _login = login;
         _passwordHash = passwordHash;
@@ -25,6 +24,5 @@ public class User
     public int Id => _id;
     public string Login => _login;
     public string PasswordHash => _passwordHash;
-
     public string GetDisplayName() => Login;
 }
