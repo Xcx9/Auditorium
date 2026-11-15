@@ -109,7 +109,8 @@ namespace Auditorium.Infrastructure.Migrations
                     b.Property<string>("Login")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .UseCollation("NOCASE");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
