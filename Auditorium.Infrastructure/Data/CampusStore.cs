@@ -2,6 +2,7 @@ using Auditorium.Core.Entities;
 using Auditorium.Core.Interfaces;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Auditorium.Core.DTOs;
 
 namespace Auditorium.Infrastructure.Data;
 
@@ -14,6 +15,18 @@ public class CampusStore : ICampusStore
     {
         _context = context;
     }
+
+    public async Task<ScheduleSnapshotState> GetScheduleStateAsync()
+    {
+        var state = await _context.ScheduleImportStates
+            .Select(state => new ScheduleSnapshotState(
+                state.LastSuccessfulUpdate,
+                state.UpdateFailed))
+            .SingleOrDefaultAsync();
+
+        return state ?? new ScheduleSnapshotState(null, false);
+    }
+    
     // ================ Rooms =====================
     public async Task<List<Room>> GetAllRoomsAsync()
     {

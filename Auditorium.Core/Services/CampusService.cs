@@ -10,6 +10,16 @@ public enum RoomState
     Busy
 }
 
+public sealed record FreeRoomSearchResult(
+    IReadOnlyList<RoomStatusInfo> Rooms,
+    int MatchingRoomCount,
+    bool HasScheduleCoverage,
+    ScheduleSnapshotState ScheduleState);
+
+public sealed record RoomDetailsResult(
+    RoomStatusInfo RoomInfo,
+    ScheduleSnapshotState ScheduleState);
+
 public sealed class RoomStatusInfo
 {
     public Room Room { get; }
@@ -67,10 +77,29 @@ public class CampusService
             .ToList();
     }
 
-    public async Task<List<RoomStatusInfo>> FindFree(int building)
-        => (await GetRooms())
-            .Where(room => room.State == RoomState.Free && room.Room.BuildingNumber() == building)
+    public async Task<FreeRoomSearchResult> FindFree(
+        int building, string? numberPart = null)
+    {
+        var numberFilter = numberPart?.Trim();
+        var rooms = await GetRooms();
+
+        var matchingRooms = rooms
+            .Where(room => room.Room.BuildingNumber() == building
+                           && (string.IsNullOrEmpty(numberFilter)
+                               || room.Room.Number.Contains(
+                                   numberFilter, StringComparison.OrdinalIgnoreCase)))
             .ToList();
+
+        var freeRooms = matchingRooms
+            .Where(room => room.State == RoomState.Free)
+            .ToList();
+
+        return new FreeRoomSearchResult(
+            freeRooms,
+            matchingRooms.Count,
+            matchingRooms.Any(room => room.State.HasValue),
+            await _store.GetScheduleStateAsync());
+    }
 
     public async Task<RoomStatusInfo?> GetRoom(int roomId)
     {
@@ -80,14 +109,21 @@ public class CampusService
         return room == null
             ? null : new RoomStatusInfo(room, await GetStatusAt(room, now));
     }
-
-    public async Task<CampusOperationResult> GetOwnMark(int userId)
+    
+    public async Task<OwnMarkDto?> GetOwnMark(int userId)
     {
         await ReleaseDueMarksAt(_clock.UtcNow);
+
         var mark = await _store.GetActiveMarkByIdAsync(userId);
-        return mark == null
-            ? new(CampusOperationCode.MarkNotFound, "Активная отметка не найдена.")
-            : new(CampusOperationCode.Success, $"Ваша аудитория: {mark.Room.Number}, занято.");
+        if (mark is null)
+            return null;
+
+        return new OwnMarkDto(
+            mark.Id,
+            mark.RoomId,
+            mark.Room.Number,
+            mark.CreatedAt,
+            mark.AutoReleaseAt);
     }
     
     public async Task<CampusOperationResult> CreateMark(int userId, int roomId)

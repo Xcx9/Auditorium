@@ -1,9 +1,10 @@
 using Auditorium.Core.Entities;
-
+using Auditorium.Core.DTOs;
 namespace Auditorium.Core.Interfaces;
 
 public interface ICampusStore
 {
+    Task<ScheduleSnapshotState> GetScheduleStateAsync();
     Task<List<Room>> GetAllRoomsAsync();
     Task<List<int>> GetOccupiedRoomIdsAsync(DateTimeOffset now);
     Task<Room?> GetRoomByIdAsync(int id);
