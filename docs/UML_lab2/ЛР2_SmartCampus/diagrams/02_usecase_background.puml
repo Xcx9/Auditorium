@@ -1,0 +1,46 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 15
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam ArrowColor #34495E
+skinparam classAttributeIconSize 0
+skinparam usecaseBackgroundColor #F3F7FB
+skinparam classBackgroundColor #F3F7FB
+skinparam activityBackgroundColor #F3F7FB
+skinparam conditionStyle diamond
+skinparam sequenceMessageAlign center
+hide footbox
+title SmartCampus — автоматические функции
+left to right direction
+actor "Планировщик\nсерверной среды" as Timer
+actor "Официальный сайт\nрасписания МИЭТ" as Site
+rectangle "SmartCampus — фоновая обработка" {
+ usecase "UC13 Обновить расписание\nпри запуске и не реже раза в 60 минут" as Sync
+ usecase "UC14 Получить и разобрать\nофициальное расписание" as Parse
+ usecase "UC15 Проверить полноту данных\nи сформировать перечень аудиторий" as Validate
+ usecase "UC16 Сохранить корректную копию\nи время успешного обновления" as Save
+ usecase "UC17 Сохранить прежнюю копию\nи признак ошибки обновления" as Fallback
+ usecase "UC18 Снять отметки\nпри начале следующего занятия" as Auto
+ usecase "UC09 Определить текущее\nвремя и статус" as Status
+}
+Timer -- Sync
+Timer -- Auto
+Site -- Parse
+Sync ..> Parse : <<include>>
+Sync ..> Validate : <<include>>
+Save ..> Sync : <<extend>>\n[данные полностью корректны]
+Fallback ..> Sync : <<extend>>\n[ошибка сети или разбора]
+Auto ..> Status : <<include>>
+note bottom of Timer
+ Планировщик — внешний триггер запуска задач,
+ а не пользователь с дополнительными правами.
+end note
+note bottom of Auto
+ Событие начала занятия и проверка при каждом запросе.
+ Пропущенное во время остановки событие обрабатывается после запуска.
+ Без следующего занятия автоматического снятия нет.
+ 60 минут — интервал загрузки, а не срок жизни отметки.
+end note
+@enduml

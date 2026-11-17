@@ -1,0 +1,59 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 15
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam ArrowColor #34495E
+skinparam classAttributeIconSize 0
+skinparam usecaseBackgroundColor #F3F7FB
+skinparam classBackgroundColor #F3F7FB
+skinparam activityBackgroundColor #F3F7FB
+skinparam conditionStyle diamond
+skinparam sequenceMessageAlign center
+hide footbox
+title SmartCampus — все функции пункта 5.1.1 ТЗ
+left to right direction
+actor "Пользователь" as User
+actor "Планировщик\nсерверной среды" as Timer
+actor "Официальный сайт\nрасписания МИЭТ" as Site
+rectangle "SmartCampus — обязательная функциональность" {
+ usecase "F01 Регистрация\nи вход" as F01
+ usecase "F02 Автоматическое получение расписания\nи формирование перечня аудиторий" as F02
+ usecase "F03 Определение текущего\nсерверного времени по Москве" as F03
+ usecase "F04 Формирование списка\nсвободных сейчас аудиторий" as F04
+ usecase "F05 Отображение статуса Room\nсвободно / занято" as F05
+ usecase "F06 Фильтрация\nпо корпусу и части номера" as F06
+ usecase "F07 Просмотр карточки\nномер, корпус, статус" as F07
+ usecase "F08 Создание отметки\nфактической занятости сейчас" as F08
+ usecase "F09 Автоматическое снятие отметки\nпри начале следующего занятия" as F09
+ usecase "F10 Ручное снятие\nсвоей отметки" as F10
+ usecase "F11 Повторная проверка перед сохранением\nодна отметка на пользователя и аудиторию" as F11
+ usecase "F12 Просмотр своей\nактивной отметки" as F12
+ usecase "F13 Работа с последней копией\nпредупреждение и время обновления" as F13
+}
+User -- F01
+User -- F04
+User -- F06
+User -- F07
+User -- F08
+User -- F10
+User -- F12
+Timer -- F02
+Timer -- F09
+Site -- F02
+F04 ..> F05 : <<include>>
+F07 ..> F05 : <<include>>
+F05 ..> F03 : <<include>>
+F08 ..> F11 : <<include>>
+F11 ..> F03 : <<include>>
+F06 ..> F04 : <<extend>>\n[фильтры заданы]
+F13 ..> F02 : <<extend>>\n[обновление не удалось]
+legend bottom
+ Предупреждение видно в поиске и карточке.
+ Без данных на дату аудитория исключается из поиска.
+ Снятие своей отметки остается доступным.
+ Без следующего занятия — до ручного снятия.
+ 60 минут — интервал загрузки расписания, не срок отметки.
+endlegend
+@enduml

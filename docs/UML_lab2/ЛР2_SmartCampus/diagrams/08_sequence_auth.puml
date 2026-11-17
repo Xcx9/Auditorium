@@ -1,0 +1,49 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 15
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam ArrowColor #34495E
+skinparam classAttributeIconSize 0
+skinparam usecaseBackgroundColor #F3F7FB
+skinparam classBackgroundColor #F3F7FB
+skinparam activityBackgroundColor #F3F7FB
+skinparam conditionStyle diamond
+skinparam sequenceMessageAlign center
+hide footbox
+title SmartCampus — регистрация и вход
+actor Пользователь as U
+boundary Интерфейс as UI
+control AuthService as A
+database Хранилище as DB
+opt нет учетной записи — пользователь выбирает регистрацию
+U -> UI : логин и пароль для регистрации
+UI -> A : Register(login, password)
+A -> A : проверить формат
+alt данные некорректны
+ A --> UI : ошибка ввода
+else данные корректны
+ A -> DB : сохранить уникальный логин и хеш пароля
+ alt логин уже существует
+  DB --> A : конфликт уникальности
+  A --> UI : логин занят
+ else сохранение успешно
+  DB --> A : User.Id
+  A --> UI : регистрация выполнена
+ end
+end
+UI --> U : результат регистрации
+end
+U -> UI : ввести логин и пароль
+UI -> A : Login(login, password)
+A -> DB : найти учетную запись
+DB --> A : запись или отсутствие
+A -> A : проверить хеш пароля
+alt данные верны
+ A --> UI : создать авторизованную сессию
+else данные неверны
+ A --> UI : ошибка входа
+end
+UI --> U : результат входа
+@enduml

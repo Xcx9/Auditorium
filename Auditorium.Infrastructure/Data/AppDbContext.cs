@@ -116,6 +116,7 @@ public class AppDbContext : DbContext
 
             entity.Property(u => u.Login)
                 .HasField("_login")
+                .UseCollation("NOCASE")
                 .HasMaxLength(100)
                 .IsRequired()
                 .UsePropertyAccessMode(PropertyAccessMode.Field);

@@ -1,0 +1,20 @@
+{
+  "pdf_pages": 28,
+  "docx_structure": "valid OOXML",
+  "docx_sections": 28,
+  "docx_images": 15,
+  "puml_count": 15,
+  "png_count": 15,
+  "svg_count": 15,
+  "core_checks_passed": 22,
+  "refactoring_input_sets_passed": 3,
+  "docx_visual_render": false,
+  "docx_render_reason": "LibreOffice soffice.exe was not found on PATH",
+  "pdf_visual_review": "All 28 pages inspected; changed pages re-rendered and inspected",
+  "diagram_visual_review": "All 15 diagrams inspected",
+  "plantuml_version": "1.2024.3",
+  "extension": "jebbs.plantuml 2.18.1",
+  "java": "OpenJDK 25.0.4",
+  "dotnet_sdk": "10.0.401",
+  "source_tz_sha256": "9f1f1d1cfc7dd73d20677e9c5a467081f3e4fe210af950e6c961e985073393f9"
+}

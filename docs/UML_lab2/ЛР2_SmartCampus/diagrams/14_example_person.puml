@@ -1,0 +1,29 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 15
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam ArrowColor #34495E
+skinparam classAttributeIconSize 0
+skinparam usecaseBackgroundColor #F3F7FB
+skinparam classBackgroundColor #F3F7FB
+skinparam activityBackgroundColor #F3F7FB
+skinparam conditionStyle diamond
+skinparam sequenceMessageAlign center
+hide footbox
+title Пример из методички — класс Person
+class Person {
+ + Name : string
+ + Surname : string
+ + Otchestvo : string
+ + GetFio() : string
+ + FioInitials() : string
+ + ClassDescription() : string
+}
+note bottom of Person
+Учебный пример преобразования ФИО, страницы 31–39 методички.
+Не входит в предметную область SmartCampus.
+Вызов конструктора: имя, фамилия, отчество.
+end note
+@enduml

@@ -16,19 +16,30 @@ namespace Auditorium.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.12");
 
-            modelBuilder.Entity("Auditorium.Core.Entities.Lesson", b =>
+            modelBuilder.Entity("Auditorium.Core.Entities.OccupancyMark", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
                     b.Property<long>("EndsAt")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("INTEGER");Мои правки по #35 в коммит не включайМои правки по #35 в коммит не включай
 
                     b.Property<int>("RoomId")
                         .HasColumnType("INTEGER");
 
                     b.Property<long>("StartsAt")
+                        .HasColumnType("INTEGER");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsCancelled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RoomId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UserId")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
@@ -39,6 +50,12 @@ namespace Auditorium.Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("Auditorium.Core.Entities.OccupancyMark", b =>
+                    b.HasIndex("UserId");
+
+                    b.ToTable("OccupancyMarks");
+                });
+
+            modelBuilder.Entity("Auditorium.Core.Entities.Room", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -100,6 +117,47 @@ namespace Auditorium.Infrastructure.Migrations
                     b.ToTable("Rooms");
                 });
 
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("State")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Number")
+                        .IsUnique();
+
+                    b.ToTable("Rooms");
+                });
+
+            modelBuilder.Entity("Auditorium.Core.Entities.ScheduleEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("End")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("RoomId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Start")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoomId");
+
+                    b.ToTable("ScheduleEntries");
+                });
+
             modelBuilder.Entity("Auditorium.Core.Entities.User", b =>
                 {
                     b.Property<int>("Id")
@@ -110,6 +168,8 @@ namespace Auditorium.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .UseCollation("NOCASE");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -142,7 +202,7 @@ namespace Auditorium.Infrastructure.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Auditorium.Core.Entities.Lesson", b =>
+            modelBuilder.Entity("Auditorium.Core.Entities.OccupancyMark", b =>
                 {
                     b.HasOne("Auditorium.Core.Entities.Room", "Room")
                         .WithMany()
@@ -154,6 +214,18 @@ namespace Auditorium.Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("Auditorium.Core.Entities.OccupancyMark", b =>
+                    b.HasOne("Auditorium.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Room");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Auditorium.Core.Entities.ScheduleEntry", b =>
                 {
                     b.HasOne("Auditorium.Core.Entities.Room", "Room")
                         .WithMany()
@@ -170,6 +242,7 @@ namespace Auditorium.Infrastructure.Migrations
                     b.Navigation("Room");
 
                     b.Navigation("User");
+                    b.Navigation("Room");
                 });
 #pragma warning restore 612, 618
         }
