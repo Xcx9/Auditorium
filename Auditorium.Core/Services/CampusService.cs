@@ -13,6 +13,7 @@ public enum RoomState
 public sealed record FreeRoomSearchResult(
     IReadOnlyList<RoomStatusInfo> Rooms,
     int MatchingRoomCount,
+    int RoomsWithoutScheduleCount,
     bool HasScheduleCoverage,
     ScheduleSnapshotState ScheduleState);
 
@@ -48,7 +49,7 @@ public class CampusService
         var now = _clock.UtcNow;
         await ReleaseDueMarksAt(now);
         return await GetStatusAt(room, now)
-            ?? throw new InvalidOperationException("Нет данных расписания на текущую московскую дату.");
+            ?? throw new InvalidOperationException("Нет данных расписания на текущую дату.");
     }
 
     private async Task<RoomState?> GetStatusAt(Room room, DateTimeOffset now)
@@ -94,20 +95,32 @@ public class CampusService
             .Where(room => room.State == RoomState.Free)
             .ToList();
 
+        var roomsWithoutScheduleCount = matchingRooms
+            .Count(room => room.State is null);
+
         return new FreeRoomSearchResult(
             freeRooms,
             matchingRooms.Count,
+            roomsWithoutScheduleCount,
             matchingRooms.Any(room => room.State.HasValue),
             await _store.GetScheduleStateAsync());
     }
 
-    public async Task<RoomStatusInfo?> GetRoom(int roomId)
+    public async Task<RoomDetailsResult?> GetRoom(int roomId)
     {
         var now = _clock.UtcNow;
         await ReleaseDueMarksAt(now);
+
         var room = await _store.GetRoomByIdAsync(roomId);
-        return room == null
-            ? null : new RoomStatusInfo(room, await GetStatusAt(room, now));
+        if (room is null)
+            return null;
+
+        var status = await GetStatusAt(room, now);
+        var scheduleState = await _store.GetScheduleStateAsync();
+
+        return new RoomDetailsResult(
+            new RoomStatusInfo(room, status),
+            scheduleState);
     }
     
     public async Task<OwnMarkDto?> GetOwnMark(int userId)
@@ -163,6 +176,9 @@ public class CampusService
             return new(CampusOperationCode.NotOwner, "Снять отметку может только её автор.");
         if (mark.ClosedAt != null)
             return new(CampusOperationCode.MarkAlreadyClosed, "Отметка уже закрыта.");
+        if (now < mark.CreatedAt)
+            throw new InvalidOperationException(
+                "Серверное время предшествует времени создания отметки.");
         if (!await _store.RemoveMarkAsync(userId, markId, now))
             return new(CampusOperationCode.MarkAlreadyClosed, "Отметка уже закрыта.");
 

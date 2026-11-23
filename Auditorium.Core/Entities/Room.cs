@@ -6,15 +6,19 @@ public class Room
 {
     private int _room_id;
     private string _number = string.Empty;
+    public string Building =>
+        BuildingNumber() is var number && number > 0
+            ? number.ToString()
+            : string.Empty;
 
     private Room() { } // EF Core
 
     public Room(string number)
     {
         if (!IsValidNumber(number))
-            throw new ArgumentException("Wrong type room id.", nameof(number));
+            throw new ArgumentException("Некорректный номер аудитории.", nameof(number));
 
-        _number = number;
+        _number = number.Trim();
     }
 
     public int Id => _room_id;
@@ -36,17 +40,24 @@ public class Room
     {
         if (sourceCode <= 0 || SourceScheduleCode is { } current && current != sourceCode)
             throw new ArgumentException("Код аудитории должен быть положительным и постоянным.", nameof(sourceCode));
-        if (!IsValidNumber(number) || number.Length > 20)
+        if (!IsValidNumber(number))
             throw new ArgumentException("Некорректный номер аудитории.", nameof(number));
-
         SourceScheduleCode = sourceCode;
-        _number = number;
+        _number = number.Trim();
         ScheduleDates = dates.Distinct().Order().ToList();
     }
     
-    public static bool IsValidNumber(string number)
+    public static bool IsValidNumber(string? number)
     {
-        return !string.IsNullOrWhiteSpace(number);
+        if (string.IsNullOrWhiteSpace(number) || number.Any(char.IsControl))
+            return false;
+
+        var value = number.Trim();
+        return value.Length is >= 4 and <= 20
+            && value[0] is >= '1' and <= '9'
+            && value.Take(4).All(char.IsAsciiDigit)
+            && value.Skip(4).All(character => char.IsLetter(character)
+                || character is ' ' or '(' or ')' or '-');
     }
 
     public string FullName() => Number;
@@ -55,14 +66,15 @@ public class Room
 
     public int BuildingNumber()
     {
-        return int.TryParse(Number[..1], out int result) ? result : 0;
+        return Number.Length > 0 && Number[0] is >= '1' and <= '9'
+            ? Number[0] - '0'
+            : 0;
     }
 
     public int FloorNumber()
     {
-        return Number.Length >= 2 &&
-               int.TryParse(Number.Substring(1, 1), out int result)
-            ? result
+        return BuildingNumber() != 0 && Number.Length >= 2 && char.IsAsciiDigit(Number[1])
+            ? Number[1] - '0'
             : 0;
     }
 }

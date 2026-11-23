@@ -39,7 +39,7 @@ public sealed class AccountMigrationTests
         await db.Database.MigrateAsync();
         await db.Database.MigrateAsync();
         var rows = await db.Database.SqlQueryRaw<string>(
-            "SELECT Subject || ':' || GroupName || ':' || Semester || ':' || Audiences.Name AS Value FROM Lessons JOIN Audiences ON Lessons.AudienceId=Audiences.Id").ToListAsync();
+            "SELECT Subject || ':' || GroupName || ':' || Semester || ':' || LegacyAudiences.Name AS Value FROM LegacyLessons JOIN LegacyAudiences ON LegacyLessons.AudienceId=LegacyAudiences.Id").ToListAsync();
         ClassicAssert.AreEqual("Алгоритмы:ПИН-311:2026:101", rows.Single());
         ClassicAssert.IsEmpty(await db.Database.SqlQueryRaw<ForeignKeyProblem>("PRAGMA foreign_key_check").ToListAsync());
         ClassicAssert.IsEmpty(await db.ScheduleEntries.ToListAsync());

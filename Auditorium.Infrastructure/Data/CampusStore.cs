@@ -116,12 +116,6 @@ public class CampusStore : ICampusStore
             return false;
         }
     }
-
-    /*public async Task RemoveMarkAsync(OccupancyMark mark)
-    {
-        _context.OccupancyMarks.Remove(mark);
-        await _context.SaveChangesAsync();
-    }*/
     
     public async Task<bool> RemoveMarkAsync(
         int userId, int markId, DateTimeOffset closedAt)

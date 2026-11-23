@@ -110,9 +110,13 @@ public sealed class ScheduleParser(HttpClient client) : IScheduleParser
 
         foreach (var info in catalog)
         {
-            if (info?.Name?.Trim() is not { Length: > 0 and <= 20 } name ||
+            if (info?.Name?.Trim() is not { Length: > 0 } name ||
                 info.Code <= 0 || !codes.Add(info.Code) || !names.Add(name))
                 throw new InvalidDataException("Каталог МИЭТ содержит неполные или повторяющиеся аудитории.");
+
+            // Импортируем только аудитории 3-го и 4-го корпусов.
+            if (name[0] is '3' or '4' && !Room.IsValidNumber(name))
+                throw new InvalidDataException("Каталог МИЭТ содержит некорректный номер аудитории.");
         }
     }
 

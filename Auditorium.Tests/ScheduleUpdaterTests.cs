@@ -23,7 +23,7 @@ public class ScheduleUpdaterTests
     {
         await using var database = await TestDatabase.CreateAsync(legacy: true);
         var updater = database.CreateUpdater(Load(Room(120, "1201 (м)", Now.AddHours(2)),
-            Room(159, "УВЦ 1", Now.AddHours(3))));
+            Room(159, "5101", Now.AddHours(3))));
         Assert.That((await updater.Refresh(Request)).Succeeded, Is.True);
         var markId = await database.AddMark(159, "owner", Now.AddHours(-1), Now.AddHours(3));
 
@@ -81,7 +81,7 @@ public class ScheduleUpdaterTests
                 """);
         }
 
-        var failed = await database.CreateUpdater(Load(Room(120, "переименована", Now.AddHours(2)), Room(243, "8110")))
+        var failed = await database.CreateUpdater(Load(Room(120, "1202", Now.AddHours(2)), Room(243, "8110")))
             .Refresh(Request);
         Assert.That(failed.Succeeded, Is.False);
         var snapshot = await database.CreateStore().GetSnapshotAsync();
@@ -98,7 +98,7 @@ public class ScheduleUpdaterTests
         var previousDeadline = Now.AddHours(3);
         await database.AddMark(120, "first", Now.AddHours(-2), previousDeadline);
         await database.AddMark(159, "second", Now.AddHours(-3), Now.AddHours(-1));
-        var result = await database.CreateUpdater(Load(Room(120, "1201", Now.AddHours(1)), Room(159, "УВЦ 1")))
+        var result = await database.CreateUpdater(Load(Room(120, "1201", Now.AddHours(1)), Room(159, "5101")))
             .Refresh(Request);
         Assert.That(result.Succeeded, Is.True);
 
